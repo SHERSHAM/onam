@@ -72,9 +72,11 @@
     const vpW = window.innerWidth;
     const vpH = window.innerHeight;
 
-    // CONTAIN: scale so the entire image fits inside the viewport
-    // Math.min ensures neither dimension overflows → nothing is cropped
-    const scale = Math.min(vpW / imgW, vpH / imgH);
+    // COVER: scale so the image fills the entire viewport edge-to-edge.
+    // Math.max ensures no black bars — the video always covers 100% of the viewport.
+    // On portrait phones, side edges get naturally cropped; on landscape, top/bottom.
+    // The composition remains centered so MCAS PRESENTS stays visible.
+    const scale = Math.max(vpW / imgW, vpH / imgH);
 
     const drawW = Math.round(imgW * scale);
     const drawH = Math.round(imgH * scale);
@@ -83,11 +85,7 @@
     const x = Math.round((vpW - drawW) / 2);
     const y = Math.round((vpH - drawH) / 2);
 
-    // Clear with black background to fill any gaps from contain scaling
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, vpW, vpH);
-
-    // Draw the frame centered and fully visible
+    // Draw the frame covering the full viewport
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, imgW, imgH, x, y, drawW, drawH);
