@@ -1,64 +1,66 @@
-/* Global Reset & Base Styling */
-html, body {
+/* ===== Global Reset ===== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  overflow-x: hidden;
+  scroll-behavior: auto; /* JS handles smooth scrolling via lerp */
+  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+}
+
+body {
   width: 100%;
   min-height: 100%;
   background-color: #000000 !important;
   color: #ffffff;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
 }
 
-/* Custom Minimal Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
 
-/* Scroll Container for pacing 300 frames smoothly across viewports */
+/* ===== Scroll Container ===== */
+/* Height controls total scroll distance: 500vh gives enough range for 300 frames */
 .scroll-container {
-  height: 600vh;
   position: relative;
+  width: 100%;
+  height: 500vh;
 }
 
-/* Fullscreen Grid Wrapper */
-.canvas-wrapper {
+/* ===== Fixed Fullscreen Canvas ===== */
+/* Canvas is position:fixed covering the entire viewport.
+   JS sets the internal pixel buffer size; CSS sets the visual display size.
+   The canvas always covers 100% of the viewport. */
+#animationCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;   /* dynamic viewport width (safe area on mobile) */
+  height: 100vh;
+  height: 100dvh;  /* dynamic viewport height (accounts for mobile address bar) */
+  display: block;
   z-index: 1;
   pointer-events: none;
-  background-color: #000000;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-}
-
-/* Hardware-Accelerated High-DPI Canvas */
-#animationCanvas {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  image-rendering: -webkit-optimize-contrast;
+  /* Subtle post-processing to enhance JPEG frame clarity */
   image-rendering: high-quality;
-  filter: contrast(1.08) brightness(1.02) saturate(1.1);
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  filter: contrast(1.06) brightness(1.02) saturate(1.08);
 }
 
-/* Minimalist Preloader Screen */
+/* ===== Preloader ===== */
 .loader {
   background-color: #000000;
   z-index: 9999;
-  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s;
+  transition: opacity 0.6s ease-out, visibility 0.6s;
 }
-
 .loader.hidden {
   opacity: 0;
   visibility: hidden;
@@ -66,35 +68,29 @@ html, body {
 }
 
 .loader-spinner {
-  width: 38px;
-  height: 38px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgba(255,255,255,0.1);
   border-top-color: #d4af37;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 .loader-text {
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 1.5px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255,255,255,0.85);
 }
 
 .loader-bar-bg {
-  width: 220px;
+  width: min(200px, 60vw);
   height: 2px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,0.1);
   border-radius: 2px;
   overflow: hidden;
 }
-
 .loader-bar {
   width: 0%;
   height: 100%;

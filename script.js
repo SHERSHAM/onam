@@ -1,79 +1,101 @@
 (() => {
+  // ─── Configuration ───────────────────────────────────────────────────
   const FRAME_COUNT = 300;
   const FOLDER_PATH = 'New folder (2)';
   const FILE_PREFIX = 'ezgif-frame-';
   const FILE_EXT = '.jpg';
 
+  // Smooth interpolation factor: lower = smoother but more delayed
+  // 0.08 gives a premium, cinematic momentum feel
+  const LERP_FACTOR = 0.08;
+
+  // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
   const ctx = canvas.getContext('2d', { alpha: false });
   const loader = document.getElementById('loader');
   const loaderText = document.getElementById('loaderText');
   const loaderBar = document.getElementById('loaderBar');
 
+  // ─── State ───────────────────────────────────────────────────────────
   const images = [];
   let loadedCount = 0;
   let currentRenderedFrame = -1;
-  let targetProgress = 0;
-  let currentProgress = 0;
-  const LERP_FACTOR = 0.08; // Silky smooth momentum factor
+  let targetProgress = 0;    // Where scroll wants us to be (0–1)
+  let currentProgress = 0;   // Where we actually are (smoothed, 0–1)
 
-  // Construct frame URL
+  // ─── Frame URL builder ───────────────────────────────────────────────
   const getFrameUrl = (index) => {
     const frameNum = String(index).padStart(3, '0');
     return `${FOLDER_PATH}/${FILE_PREFIX}${frameNum}${FILE_EXT}`;
   };
 
-  // Adjust canvas resolution for High DPI displays
+  // ─── Canvas Resize (HiDPI-aware) ────────────────────────────────────
+  // Sets internal pixel buffer to match viewport × devicePixelRatio.
+  // CSS handles the visual display size (100vw × 100dvh).
   const resizeCanvas = () => {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    // Set internal buffer resolution
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
 
+    // Set CSS display size to exactly match the viewport
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+
+    // Reset transform and apply DPR scaling
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    
-    // Re-draw current frame after resizing
+
+    // Re-draw current frame at new size
     if (currentRenderedFrame >= 0 && images[currentRenderedFrame]) {
       drawFrame(currentRenderedFrame);
     }
   };
 
-  // Draw frame full-screen and perfectly fit across all screen sizes (responsive cover)
+  // ─── Draw Frame (Responsive Contain Fit) ─────────────────────────────
+  // Uses CONTAIN scaling: the entire composition (MCAS PRESENTS) is always
+  // fully visible and centered. Black bars fill any aspect ratio mismatch.
+  // This ensures nothing is ever cropped on any screen size or orientation.
   const drawFrame = (frameIndex) => {
     const img = images[frameIndex];
     if (!img) return;
 
-    const imgWidth = img.naturalWidth || img.width || 1920;
-    const imgHeight = img.naturalHeight || img.height || 1080;
-    if (imgWidth === 0 || imgHeight === 0) return;
+    const imgW = img.naturalWidth || img.width || 1920;
+    const imgH = img.naturalHeight || img.height || 1080;
+    if (imgW === 0 || imgH === 0) return;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
 
-    // Full screen edge-to-edge cover scaling for perfect fit on any device size
-    const scale = Math.max(width / imgWidth, height / imgHeight);
-    const renderWidth = Math.round(imgWidth * scale);
-    const renderHeight = Math.round(imgHeight * scale);
-    const x = Math.round((width - renderWidth) / 2);
-    const y = Math.round((height - renderHeight) / 2);
+    // CONTAIN: scale so the entire image fits inside the viewport
+    // Math.min ensures neither dimension overflows → nothing is cropped
+    const scale = Math.min(vpW / imgW, vpH / imgH);
 
+    const drawW = Math.round(imgW * scale);
+    const drawH = Math.round(imgH * scale);
+
+    // Center the scaled image within the viewport
+    const x = Math.round((vpW - drawW) / 2);
+    const y = Math.round((vpH - drawH) / 2);
+
+    // Clear with black background to fill any gaps from contain scaling
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, vpW, vpH);
+
+    // Draw the frame centered and fully visible
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, imgW, imgH, x, y, drawW, drawH);
 
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(0, 0, width, height);
-    ctx.drawImage(img, 0, 0, imgWidth, imgHeight, x, y, renderWidth, renderHeight);
     currentRenderedFrame = frameIndex;
   };
 
-  // Update target progress from scroll position
+  // ─── Scroll Progress Tracker ─────────────────────────────────────────
   const updateScrollProgress = () => {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     if (maxScroll > 0) {
@@ -83,17 +105,26 @@
     }
   };
 
-  // Animation render loop with linear interpolation (lerp)
+  // ─── Animation Render Loop (Lerp Interpolation) ──────────────────────
+  // Runs at display refresh rate (60/120fps). Smoothly interpolates
+  // currentProgress toward targetProgress for premium cinematic motion.
   const renderLoop = () => {
-    // Interpolate progress smoothly
-    currentProgress += (targetProgress - currentProgress) * LERP_FACTOR;
+    // Smooth interpolation: exponential ease toward target
+    const delta = targetProgress - currentProgress;
+    currentProgress += delta * LERP_FACTOR;
 
-    // Determine target frame index based on smooth progress
+    // Snap when extremely close to avoid infinite micro-animations
+    if (Math.abs(delta) < 0.0001) {
+      currentProgress = targetProgress;
+    }
+
+    // Map smooth progress to frame index
     const frameIndex = Math.min(
       FRAME_COUNT - 1,
       Math.max(0, Math.round(currentProgress * (FRAME_COUNT - 1)))
     );
 
+    // Only repaint when the frame actually changes
     if (frameIndex !== currentRenderedFrame) {
       drawFrame(frameIndex);
     }
@@ -101,7 +132,9 @@
     requestAnimationFrame(renderLoop);
   };
 
-  // Preload all frames into GPU ImageBitmaps for maximum rendering speed and sharpness
+  // ─── Image Preloader ─────────────────────────────────────────────────
+  // Loads all 300 frames, converts each to GPU-accelerated ImageBitmap
+  // for maximum canvas rendering speed. Shows progress in the loader UI.
   const preloadImages = async () => {
     const promises = [];
 
@@ -112,7 +145,7 @@
 
         img.onload = async () => {
           try {
-            // Convert to high quality GPU ImageBitmap
+            // GPU-accelerated ImageBitmap for faster drawImage
             const bitmap = await createImageBitmap(img, {
               imageOrientation: 'none',
               premultiplyAlpha: 'none',
@@ -120,6 +153,7 @@
             });
             images[frameIdx] = bitmap;
           } catch (e) {
+            // Fallback to regular Image element
             images[frameIdx] = img;
           }
 
@@ -128,6 +162,7 @@
           if (loaderText) loaderText.textContent = `${percent}%`;
           if (loaderBar) loaderBar.style.width = `${percent}%`;
 
+          // Show first frame as soon as it loads (immediate visual feedback)
           if (frameIdx === 0 && currentRenderedFrame === -1) {
             drawFrame(0);
           }
@@ -150,11 +185,13 @@
     onAllImagesLoaded();
   };
 
+  // ─── Post-Load Setup ─────────────────────────────────────────────────
   const onAllImagesLoaded = () => {
     setTimeout(() => {
       if (loader) {
         loader.classList.add('hidden');
       }
+      // Sync to current scroll position
       updateScrollProgress();
       currentProgress = targetProgress;
       const initialFrame = Math.min(
@@ -165,11 +202,16 @@
     }, 150);
   };
 
-  // Initialize event listeners
+  // ─── Event Listeners ─────────────────────────────────────────────────
+  // All passive for maximum scroll performance (no jank)
   window.addEventListener('resize', resizeCanvas, { passive: true });
-  window.addEventListener('orientationchange', resizeCanvas, { passive: true });
+  window.addEventListener('orientationchange', () => {
+    // Delay to let the browser finish orientation change layout
+    setTimeout(resizeCanvas, 100);
+  }, { passive: true });
   window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
+  // ─── Initialize ──────────────────────────────────────────────────────
   resizeCanvas();
   updateScrollProgress();
   preloadImages();
