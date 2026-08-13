@@ -1,6 +1,6 @@
 (() => {
   const FRAME_COUNT = 300;
-  const FOLDER_PATH = 'New folder';
+  const FOLDER_PATH = 'New folder (2)';
   const FILE_PREFIX = 'ezgif-frame-';
   const FILE_EXT = '.jpg';
 
@@ -15,7 +15,7 @@
   let currentRenderedFrame = -1;
   let targetProgress = 0;
   let currentProgress = 0;
-  const LERP_FACTOR = 0.08; // Smoothness factor (lower = smoother/more momentum)
+  const LERP_FACTOR = 0.08; // Silky smooth momentum factor
 
   // Construct frame URL
   const getFrameUrl = (index) => {
@@ -25,7 +25,7 @@
 
   // Adjust canvas resolution for High DPI displays
   const resizeCanvas = () => {
-    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
 
@@ -45,19 +45,19 @@
     }
   };
 
-  // Draw frame with high fidelity, crisp pixel alignment, and seamless contain fit
+  // Draw frame full-screen and perfectly fit across all screen sizes (responsive cover)
   const drawFrame = (frameIndex) => {
     const img = images[frameIndex];
     if (!img) return;
 
-    const imgWidth = img.naturalWidth || img.width || 1280;
-    const imgHeight = img.naturalHeight || img.height || 720;
+    const imgWidth = img.naturalWidth || img.width || 1920;
+    const imgHeight = img.naturalHeight || img.height || 1080;
     if (imgWidth === 0 || imgHeight === 0) return;
 
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Fullscreen cover mode: fills 100% of the screen edge-to-edge on mobile, tablet, and desktop
+    // Full screen edge-to-edge cover scaling for perfect fit on any device size
     const scale = Math.max(width / imgWidth, height / imgHeight);
     const renderWidth = Math.round(imgWidth * scale);
     const renderHeight = Math.round(imgHeight * scale);
@@ -165,8 +165,9 @@
     }, 150);
   };
 
-  // Initialize
+  // Initialize event listeners
   window.addEventListener('resize', resizeCanvas, { passive: true });
+  window.addEventListener('orientationchange', resizeCanvas, { passive: true });
   window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
   resizeCanvas();
