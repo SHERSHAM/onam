@@ -6,12 +6,14 @@
   const FILE_EXT = '.jpg';
   const LERP_FACTOR = 0.06;
 
-  // Title reveal timing (as fraction of total scroll 0–1)
-  const MCAS_START = 0.45;      // MCAS begins to appear
-  const MCAS_FULL = 0.58;       // MCAS fully visible
-  const PRESENTS_START = 0.55;  // PRESENTS begins
-  const PRESENTS_FULL = 0.65;   // PRESENTS fully visible
-  // No fade-out — titles stay permanently visible after reveal
+  // Title and button reveal timing (as fraction of total scroll 0–1)
+  const MCAS_START = 0.45;       // MCAS begins to appear
+  const MCAS_FULL = 0.58;        // MCAS fully visible
+  const PRESENTS_START = 0.55;   // PRESENTS begins
+  const PRESENTS_FULL = 0.65;    // PRESENTS fully visible
+  const BUTTON_START = 0.66;     // NAME REVEAL button begins reveal
+  const BUTTON_FULL = 0.76;      // NAME REVEAL button fully visible
+  // No fade-out — titles and button stay permanently visible after reveal
 
   // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
@@ -21,6 +23,8 @@
   const loaderBar = document.getElementById('loaderBar');
   const titleMCAS = document.getElementById('titleMCAS');
   const titlePresents = document.getElementById('titlePresents');
+  const btnNameReveal = document.getElementById('btnNameReveal');
+  const transitionOverlay = document.getElementById('transitionOverlay');
 
   // ─── State ───────────────────────────────────────────────────────────
   const images = [];
@@ -37,12 +41,10 @@
   };
 
   // ─── Easing helper ───────────────────────────────────────────────────
-  // Smooth ease-in-out for cinematic reveals
   const easeInOutCubic = (t) => {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   };
 
-  // Map a value from one range to 0–1, clamped
   const mapRange = (value, inMin, inMax) => {
     return Math.min(1, Math.max(0, (value - inMin) / (inMax - inMin)));
   };
@@ -91,49 +93,90 @@
     currentRenderedFrame = frameIndex;
   };
 
-  // ─── Title Animation ─────────────────────────────────────────────────
-  // Updates the MCAS and PRESENTS DOM elements based on scroll progress.
-  // Creates a cinematic reveal: blur→sharp, scale up, opacity fade, golden glow.
+  // ─── Title & Button Animation ────────────────────────────────────────
   const updateTitleOverlay = (progress) => {
     // ── MCAS reveal (permanently visible once fully revealed) ──
-    const mcasRevealRaw = mapRange(progress, MCAS_START, MCAS_FULL);
-    const mcasReveal = easeInOutCubic(mcasRevealRaw);
+    if (titleMCAS) {
+      const mcasRevealRaw = mapRange(progress, MCAS_START, MCAS_FULL);
+      const mcasReveal = easeInOutCubic(mcasRevealRaw);
 
-    if (mcasReveal <= 0) {
-      titleMCAS.style.opacity = '0';
-      titleMCAS.style.transform = 'scale(0.85) translateY(20px)';
-      titleMCAS.style.filter = 'drop-shadow(0 0 30px rgba(212,175,55,0)) drop-shadow(0 2px 4px rgba(0,0,0,0)) blur(8px)';
-    } else {
-      const scale = 0.85 + mcasReveal * 0.15;
-      const translateY = 20 * (1 - mcasReveal);
-      const blur = 8 * (1 - mcasReveal);
-      const glowAlpha = mcasReveal * 0.6;
-      const shadowAlpha = mcasReveal * 0.7;
+      if (mcasReveal <= 0) {
+        titleMCAS.style.opacity = '0';
+        titleMCAS.style.transform = 'scale(0.85) translateY(20px)';
+        titleMCAS.style.filter = 'drop-shadow(0 0 30px rgba(212,175,55,0)) drop-shadow(0 2px 4px rgba(0,0,0,0)) blur(8px)';
+      } else {
+        const scale = 0.85 + mcasReveal * 0.15;
+        const translateY = 20 * (1 - mcasReveal);
+        const blur = 8 * (1 - mcasReveal);
+        const glowAlpha = mcasReveal * 0.6;
+        const shadowAlpha = mcasReveal * 0.7;
 
-      titleMCAS.style.opacity = String(mcasReveal);
-      titleMCAS.style.transform = `scale(${scale}) translateY(${translateY}px)`;
-      titleMCAS.style.filter = `drop-shadow(0 0 ${30 + mcasReveal * 20}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 3px 6px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+        titleMCAS.style.opacity = String(mcasReveal);
+        titleMCAS.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+        titleMCAS.style.filter = `drop-shadow(0 0 ${30 + mcasReveal * 20}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 3px 6px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+      }
     }
 
     // ── PRESENTS reveal (permanently visible once fully revealed) ──
-    const presRevealRaw = mapRange(progress, PRESENTS_START, PRESENTS_FULL);
-    const presReveal = easeInOutCubic(presRevealRaw);
+    if (titlePresents) {
+      const presRevealRaw = mapRange(progress, PRESENTS_START, PRESENTS_FULL);
+      const presReveal = easeInOutCubic(presRevealRaw);
 
-    if (presReveal <= 0) {
-      titlePresents.style.opacity = '0';
-      titlePresents.style.transform = 'translateY(12px)';
-      titlePresents.style.filter = 'drop-shadow(0 0 15px rgba(212,175,55,0)) drop-shadow(0 1px 3px rgba(0,0,0,0)) blur(6px)';
-    } else {
-      const translateY = 12 * (1 - presReveal);
-      const blur = 6 * (1 - presReveal);
-      const glowAlpha = presReveal * 0.4;
-      const shadowAlpha = presReveal * 0.5;
+      if (presReveal <= 0) {
+        titlePresents.style.opacity = '0';
+        titlePresents.style.transform = 'translateY(12px)';
+        titlePresents.style.filter = 'drop-shadow(0 0 15px rgba(212,175,55,0)) drop-shadow(0 1px 3px rgba(0,0,0,0)) blur(6px)';
+      } else {
+        const translateY = 12 * (1 - presReveal);
+        const blur = 6 * (1 - presReveal);
+        const glowAlpha = presReveal * 0.4;
+        const shadowAlpha = presReveal * 0.5;
 
-      titlePresents.style.opacity = String(presReveal);
-      titlePresents.style.transform = `translateY(${translateY}px)`;
-      titlePresents.style.filter = `drop-shadow(0 0 ${15 + presReveal * 10}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 1px 3px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+        titlePresents.style.opacity = String(presReveal);
+        titlePresents.style.transform = `translateY(${translateY}px)`;
+        titlePresents.style.filter = `drop-shadow(0 0 ${15 + presReveal * 10}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 1px 3px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+      }
+    }
+
+    // ── NAME REVEAL Button reveal (naturally follows MCAS PRESENTS) ──
+    if (btnNameReveal) {
+      const btnRevealRaw = mapRange(progress, BUTTON_START, BUTTON_FULL);
+      const btnReveal = easeInOutCubic(btnRevealRaw);
+
+      if (btnReveal <= 0) {
+        btnNameReveal.style.opacity = '0';
+        btnNameReveal.style.transform = 'translateY(14px) scale(0.94)';
+        btnNameReveal.style.filter = 'blur(4px)';
+        btnNameReveal.style.pointerEvents = 'none';
+      } else {
+        const translateY = 14 * (1 - btnReveal);
+        const scale = 0.94 + btnReveal * 0.06;
+        const blur = 4 * (1 - btnReveal);
+
+        btnNameReveal.style.opacity = String(btnReveal);
+        btnNameReveal.style.transform = `translateY(${translateY}px) scale(${scale})`;
+        btnNameReveal.style.filter = `blur(${blur}px)`;
+        btnNameReveal.style.pointerEvents = btnReveal > 0.7 ? 'auto' : 'none';
+      }
     }
   };
+
+  // ─── Cinematic Page Navigation ───────────────────────────────────────
+  window.cinematicNavigate = () => {
+    if (transitionOverlay) {
+      transitionOverlay.classList.add('active');
+    }
+    setTimeout(() => {
+      window.location.href = 'name-reveal.html';
+    }, 700);
+  };
+
+  if (btnNameReveal) {
+    btnNameReveal.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.cinematicNavigate();
+    });
+  }
 
   // ─── Scroll Progress ─────────────────────────────────────────────────
   const updateScrollProgress = () => {
@@ -168,9 +211,7 @@
       drawFrame(frameIndex);
     }
 
-    // Update title overlay every frame for smooth animation
     updateTitleOverlay(currentProgress);
-
     requestAnimationFrame(renderLoop);
   };
 
