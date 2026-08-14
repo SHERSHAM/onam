@@ -1019,18 +1019,81 @@
       setInterval(updateCountdown, 1000);
       updateCountdown();
 
-      // ─── Q&A Form Submission ──────────────────────────────────────────
+      // ─── Q&A Form Submission & Excel / Google Sheets Sync ────────────
+      // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
+      const GOOGLE_SHEET_URL = "";
+
       window.submitQaForm = () => {
+        const q1 = document.querySelector('input[name="q1"]:checked')?.value || 'Not answered';
+        const q2 = document.querySelector('input[name="q2"]:checked')?.value || 'Not answered';
+        const q3 = document.querySelector('input[name="q3"]:checked')?.value || 'Not answered';
+        const q4 = document.querySelector('input[name="q4"]:checked')?.value || 'Not answered';
+
         const btn = document.getElementById('btnSubmitQa');
         const msg = document.getElementById('qaSuccessMsg');
+
         if (btn) {
-          btn.style.opacity = '0.5';
+          btn.style.opacity = '0.7';
           btn.style.pointerEvents = 'none';
-          btn.textContent = 'RESPONSES RECORDED';
+          btn.textContent = 'RECORDING...';
         }
-        if (msg) {
-          msg.classList.add('active');
+
+        const submission = {
+          timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          q1: q1,
+          q2: q2,
+          q3: q3,
+          q4: q4
+        };
+
+        // 1. Save locally in Browser Storage
+        try {
+          const stored = JSON.parse(localStorage.getItem('mcas_qa_records') || '[]');
+          stored.push(submission);
+          localStorage.setItem('mcas_qa_records', JSON.stringify(stored));
+        } catch (e) {
+          console.warn('LocalStorage error:', e);
         }
+
+        // 2. Send to Google Sheets (if URL configured)
+        if (GOOGLE_SHEET_URL && GOOGLE_SHEET_URL.startsWith('http')) {
+          fetch(GOOGLE_SHEET_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(submission)
+          }).catch(err => console.error('Sheet sync error:', err));
+        }
+
+        setTimeout(() => {
+          if (btn) {
+            btn.style.opacity = '0.5';
+            btn.textContent = 'RESPONSES RECORDED';
+          }
+          if (msg) {
+            msg.classList.add('active');
+          }
+        }, 600);
+      };
+
+      // ─── Helper function to download all local responses as Excel/CSV ───
+      window.downloadExcelSheet = () => {
+        const records = JSON.parse(localStorage.getItem('mcas_qa_records') || '[]');
+        if (records.length === 0) {
+          alert('No responses recorded yet!');
+          return;
+        }
+        let csvContent = 'data:text/csv;charset=utf-8,Timestamp,Celebration Highlight,Attending With,Traditional Element,Attended Before\n';
+        records.forEach(r => {
+          csvContent += `"${r.timestamp}","${r.q1}","${r.q2}","${r.q3}","${r.q4}"\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'MCAS_Onam_QA_Responses.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       };
 
       // ─── Smooth Scroll & Cinematic Parallax Animation ──────────────────
