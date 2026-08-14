@@ -84,26 +84,37 @@ module.exports = async (req, res) => {
       });
     }
 
-    // 3. Google Apps Script Webhook URL (Default or from Env Var)
+    // 3. Google Apps Script Web App URL (sends URLSearchParams as required by Apps Script e.parameter)
     const webhookUrl = process.env.GOOGLE_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycby-shUzKa85Dn5vFJ_Ln_F2XzR9S9tKr11sduoLVjh_8hnLZj8MTEkRFy5Dx61BYbir/exec';
     
     if (webhookUrl && webhookUrl.startsWith('http')) {
-      const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+      const formData = new URLSearchParams();
+      formData.append('studentName', cleanName);
+      formData.append('department', cleanDept);
+      formData.append('attendance', cleanAttendance);
+
       const response = await fetch(webhookUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          timestamp: istTimeStr,
-          studentName: cleanName,
-          department: cleanDept,
-          attendance: cleanAttendance
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData.toString(),
+        redirect: 'follow'
       });
 
-      return res.status(200).json({
-        success: true,
-        message: 'Registration recorded successfully in Google Sheets.'
-      });
+      const responseText = await response.text();
+      let responseJson = {};
+      try {
+        responseJson = JSON.parse(responseText);
+      } catch (e) {}
+
+      if (response.ok || responseJson.success) {
+        return res.status(200).json({
+          success: true,
+          message: 'Registration recorded successfully in Google Sheets.',
+          data: responseJson
+        });
+      } else {
+        throw new Error(`Google Apps Script failed: ${responseText}`);
+      }
     }
 
     // If no credentials configured yet, return clear helpful message for administrator

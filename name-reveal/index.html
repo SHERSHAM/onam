@@ -1141,40 +1141,50 @@
           btn.textContent = 'RECORDING...';
         }
 
-        const payload = {
-          studentName: studentName,
-          department: department,
-          attendance: attendance
-        };
+        console.log("Submitting:", {
+          studentName,
+          department,
+          attendance
+        });
+
+        // 3. Construct URL-encoded form parameters as required by Apps Script e.parameter
+        const formData = new URLSearchParams();
+        formData.append("studentName", studentName);
+        formData.append("department", department);
+        formData.append("attendance", attendance);
 
         try {
-          // 3. Send directly to Google Apps Script Web App Endpoint
-          await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(payload)
+          // Send POST request with formData
+          const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            body: formData
           });
 
-          // Backup server route if running on Vercel
-          fetch('/api/submit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          }).catch(() => {});
-
-          // Save backup in browser storage
-          try {
-            const stored = JSON.parse(localStorage.getItem('mcas_student_records') || '[]');
-            stored.push({
-              timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-              studentName, department, attendance
-            });
-            localStorage.setItem('mcas_student_records', JSON.stringify(stored));
-          } catch (e) {}
+          console.log("Response status:", response.status);
+          const result = await response.json().catch(() => ({}));
+          console.log("Apps Script Response:", result);
 
           // 4. Show Cinematic Success State
-          setTimeout(() => {
+          if (btn) {
+            btn.style.opacity = '0.5';
+            btn.textContent = 'SUBMITTED';
+          }
+          if (successMsg) {
+            successMsg.classList.add('active');
+          }
+
+        } catch (err) {
+          console.warn("Direct fetch error, attempting fallback submission:", err);
+
+          try {
+            // Browser CORS fallback mode
+            await fetch(GOOGLE_SCRIPT_URL, {
+              method: "POST",
+              mode: "no-cors",
+              body: formData
+            });
+
+            console.log("Submission successfully sent to Google Apps Script (no-cors mode)");
             if (btn) {
               btn.style.opacity = '0.5';
               btn.textContent = 'SUBMITTED';
@@ -1182,24 +1192,24 @@
             if (successMsg) {
               successMsg.classList.add('active');
             }
-          }, 350);
 
-        } catch (err) {
-          console.error('Submission Error:', err);
-          // Restore button for retry without clearing user fields
-          if (btn) {
-            btn.style.opacity = '1';
-            btn.style.pointerEvents = 'auto';
-            btn.textContent = 'SUBMIT';
-          }
-          if (errorText) {
-            errorText.textContent = 'SUBMISSION FAILED — PLEASE TRY AGAIN';
-          }
-          if (errorMsg) {
-            errorMsg.classList.add('active');
-          }
-          if (successMsg) {
-            successMsg.classList.remove('active');
+          } catch (fallbackErr) {
+            console.error("Submission failed completely:", fallbackErr);
+            // Restore button for retry without clearing user fields
+            if (btn) {
+              btn.style.opacity = '1';
+              btn.style.pointerEvents = 'auto';
+              btn.textContent = 'SUBMIT';
+            }
+            if (errorText) {
+              errorText.textContent = 'SUBMISSION FAILED — PLEASE TRY AGAIN';
+            }
+            if (errorMsg) {
+              errorMsg.classList.add('active');
+            }
+            if (successMsg) {
+              successMsg.classList.remove('active');
+            }
           }
         }
       };
