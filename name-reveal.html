@@ -339,12 +339,12 @@
       position: relative;
     }
 
-    /* Posters Dual Grid Display */
+    /* Posters Dual Grid Display — Balanced & Equal Sizing */
     .posters-grid-container {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
       gap: clamp(1.2rem, 3vw, 2.5rem);
-      align-items: center;
+      align-items: stretch;
       justify-content: center;
       width: 100%;
       margin: 1.5rem auto 2rem;
@@ -353,19 +353,25 @@
     .poster-showcase-card {
       position: relative;
       width: 100%;
+      height: clamp(380px, 50vh, 520px);
       border-radius: 4px;
       overflow: hidden;
       border: 1px solid rgba(212, 175, 55, 0.5);
-      background-color: #000;
+      background: radial-gradient(circle at center, rgba(20, 15, 6, 0.9) 0%, rgba(0, 0, 0, 0.98) 100%);
       box-shadow:
-        0 0 40px rgba(212, 175, 55, 0.25),
+        0 0 40px rgba(212, 175, 55, 0.22),
         0 20px 45px rgba(0, 0, 0, 0.9),
         inset 0 0 20px rgba(212, 175, 55, 0.1);
-      transition: transform 0.4s ease, box-shadow 0.4s ease;
+      transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
     }
 
     .poster-showcase-card:hover {
       transform: scale(1.02);
+      border-color: rgba(212, 175, 55, 0.85);
       box-shadow:
         0 0 60px rgba(212, 175, 55, 0.35),
         0 25px 55px rgba(0, 0, 0, 0.95);
@@ -373,9 +379,10 @@
 
     .poster-img {
       width: 100%;
-      height: auto;
+      height: 100%;
       display: block;
       object-fit: contain;
+      object-position: center;
       filter: contrast(1.08) brightness(1.02) saturate(1.1);
     }
 
