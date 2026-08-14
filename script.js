@@ -11,8 +11,7 @@
   const MCAS_FULL = 0.58;       // MCAS fully visible
   const PRESENTS_START = 0.55;  // PRESENTS begins
   const PRESENTS_FULL = 0.65;   // PRESENTS fully visible
-  const TITLE_FADE_START = 0.78; // Titles begin fading out
-  const TITLE_FADE_END = 0.88;   // Titles fully gone
+  // No fade-out — titles stay permanently visible after reveal
 
   // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
@@ -96,13 +95,11 @@
   // Updates the MCAS and PRESENTS DOM elements based on scroll progress.
   // Creates a cinematic reveal: blur→sharp, scale up, opacity fade, golden glow.
   const updateTitleOverlay = (progress) => {
-    // ── MCAS reveal ──
+    // ── MCAS reveal (permanently visible once fully revealed) ──
     const mcasRevealRaw = mapRange(progress, MCAS_START, MCAS_FULL);
-    const mcasFadeRaw = 1 - mapRange(progress, TITLE_FADE_START, TITLE_FADE_END);
     const mcasReveal = easeInOutCubic(mcasRevealRaw);
-    const mcasVisible = Math.min(mcasReveal, mcasFadeRaw);
 
-    if (mcasVisible <= 0) {
+    if (mcasReveal <= 0) {
       titleMCAS.style.opacity = '0';
       titleMCAS.style.transform = 'scale(0.85) translateY(20px)';
       titleMCAS.style.filter = 'drop-shadow(0 0 30px rgba(212,175,55,0)) drop-shadow(0 2px 4px rgba(0,0,0,0)) blur(8px)';
@@ -110,31 +107,29 @@
       const scale = 0.85 + mcasReveal * 0.15;
       const translateY = 20 * (1 - mcasReveal);
       const blur = 8 * (1 - mcasReveal);
-      const glowAlpha = mcasVisible * 0.6;
-      const shadowAlpha = mcasVisible * 0.7;
+      const glowAlpha = mcasReveal * 0.6;
+      const shadowAlpha = mcasReveal * 0.7;
 
-      titleMCAS.style.opacity = String(mcasVisible);
+      titleMCAS.style.opacity = String(mcasReveal);
       titleMCAS.style.transform = `scale(${scale}) translateY(${translateY}px)`;
       titleMCAS.style.filter = `drop-shadow(0 0 ${30 + mcasReveal * 20}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 3px 6px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
     }
 
-    // ── PRESENTS reveal ──
+    // ── PRESENTS reveal (permanently visible once fully revealed) ──
     const presRevealRaw = mapRange(progress, PRESENTS_START, PRESENTS_FULL);
-    const presFadeRaw = 1 - mapRange(progress, TITLE_FADE_START, TITLE_FADE_END);
     const presReveal = easeInOutCubic(presRevealRaw);
-    const presVisible = Math.min(presReveal, presFadeRaw);
 
-    if (presVisible <= 0) {
+    if (presReveal <= 0) {
       titlePresents.style.opacity = '0';
       titlePresents.style.transform = 'translateY(12px)';
       titlePresents.style.filter = 'drop-shadow(0 0 15px rgba(212,175,55,0)) drop-shadow(0 1px 3px rgba(0,0,0,0)) blur(6px)';
     } else {
       const translateY = 12 * (1 - presReveal);
       const blur = 6 * (1 - presReveal);
-      const glowAlpha = presVisible * 0.4;
-      const shadowAlpha = presVisible * 0.5;
+      const glowAlpha = presReveal * 0.4;
+      const shadowAlpha = presReveal * 0.5;
 
-      titlePresents.style.opacity = String(presVisible);
+      titlePresents.style.opacity = String(presReveal);
       titlePresents.style.transform = `translateY(${translateY}px)`;
       titlePresents.style.filter = `drop-shadow(0 0 ${15 + presReveal * 10}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 1px 3px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
     }
