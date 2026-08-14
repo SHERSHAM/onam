@@ -388,40 +388,72 @@
       margin-top: 1rem;
     }
 
-    /* Actions Footer */
-    .actions-footer {
-      margin-top: clamp(2rem, 4vh, 3.5rem);
+    /* ===== Cinematic Countdown Timer Component ===== */
+    .countdown-container {
       display: flex;
+      align-items: center;
       justify-content: center;
-      gap: 1.5rem;
+      gap: clamp(0.6rem, 2vw, 1.8rem);
+      margin: clamp(1.5rem, 3.5vh, 2.5rem) auto 0.5rem;
+      padding: clamp(0.75rem, 2vh, 1.25rem) clamp(1.2rem, 3vw, 2.5rem);
+      background: rgba(12, 10, 6, 0.45);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 4px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow:
+        0 0 35px rgba(212, 175, 55, 0.08),
+        inset 0 1px 0 rgba(245, 230, 184, 0.15);
+      width: fit-content;
+      max-width: 95%;
     }
 
-    .btn-gold-action {
-      font-family: 'Cinzel', serif;
-      font-weight: 600;
-      font-size: clamp(0.6rem, 1.2vw, 0.85rem);
-      letter-spacing: 0.4em;
-      padding: clamp(12px, 1.8vh, 16px) clamp(28px, 4vw, 44px);
-      color: transparent;
-      background: linear-gradient(180deg, #f5e6b8 0%, #d4af37 50%, #b8942d 100%);
+    .countdown-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: clamp(42px, 8vw, 75px);
+    }
+
+    .countdown-num {
+      font-family: 'Cinzel', 'Times New Roman', serif;
+      font-weight: 800;
+      font-size: clamp(1.4rem, 4vw, 2.8rem);
+      line-height: 1;
+      letter-spacing: 0.08em;
+      background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #f5e6b8 25%,
+        #d4af37 55%,
+        #aa8222 80%,
+        #c9a84c 100%
+      );
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-color: rgba(0, 0, 0, 0.4);
-      border: 1px solid rgba(212, 175, 55, 0.4);
-      border-radius: 2px;
-      text-decoration: none;
-      display: inline-block;
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.1), inset 0 1px 0 rgba(245, 230, 184, 0.2);
-      transition: all 0.4s ease;
-      cursor: pointer;
+      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4))
+              drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+      font-variant-numeric: tabular-nums;
     }
 
-    .btn-gold-action:hover {
-      border-color: rgba(212, 175, 55, 0.85);
-      background-color: rgba(212, 175, 55, 0.12);
-      box-shadow: 0 0 45px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(245, 230, 184, 0.4);
-      transform: translateY(-2px);
+    .countdown-separator {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: clamp(1.2rem, 3.5vw, 2.4rem);
+      line-height: 1;
+      color: rgba(212, 175, 55, 0.6);
+      margin-top: -0.85rem;
+      text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .countdown-label {
+      font-size: clamp(0.48rem, 1vw, 0.65rem);
+      font-weight: 600;
+      letter-spacing: clamp(0.18em, 0.8vw, 0.35em);
+      color: rgba(212, 175, 55, 0.7);
+      margin-top: 0.45rem;
+      text-transform: uppercase;
     }
   </style>
 </head>
@@ -482,7 +514,7 @@
       </div>
     </section>
 
-    <!-- Scene 3: The Climax / Name Reveal Poster -->
+    <!-- Scene 3: The Climax / Name Reveal Poster + Countdown -->
     <section class="scroll-section" id="scene3">
       <div class="content-box" id="box3">
         <div class="reveal-frame-wrapper">
@@ -506,9 +538,29 @@
 
             <p class="revealed-subtext">MCAS SPECIAL PRESENTATION &bull; ONAM 2026</p>
 
-            <div class="actions-footer">
-              <a href="index.html" class="btn-gold-action">REPLAY INTRO</a>
+            <!-- Cinematic Countdown Timer (Replacing REPLAY INTRO) -->
+            <div class="countdown-container" id="countdownTimer">
+              <div class="countdown-unit">
+                <span class="countdown-num" id="cdDays">00</span>
+                <span class="countdown-label">DAYS</span>
+              </div>
+              <span class="countdown-separator">:</span>
+              <div class="countdown-unit">
+                <span class="countdown-num" id="cdHours">00</span>
+                <span class="countdown-label">HOURS</span>
+              </div>
+              <span class="countdown-separator">:</span>
+              <div class="countdown-unit">
+                <span class="countdown-num" id="cdMinutes">00</span>
+                <span class="countdown-label">MINUTES</span>
+              </div>
+              <span class="countdown-separator">:</span>
+              <div class="countdown-unit">
+                <span class="countdown-num" id="cdSeconds">00</span>
+                <span class="countdown-label">SECONDS</span>
+              </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -518,6 +570,40 @@
 
   <script>
     (() => {
+      // ─── Countdown Timer: August 20, 2026 09:00:00 AM IST (Asia/Kolkata) ──
+      const targetDate = new Date('2026-08-20T09:00:00+05:30').getTime();
+
+      const updateCountdown = () => {
+        const now = new Date().getTime();
+        const diff = targetDate - now;
+
+        const daysEl = document.getElementById('cdDays');
+        const hoursEl = document.getElementById('cdHours');
+        const minEl = document.getElementById('cdMinutes');
+        const secEl = document.getElementById('cdSeconds');
+
+        if (diff <= 0) {
+          if (daysEl) daysEl.textContent = '00';
+          if (hoursEl) hoursEl.textContent = '00';
+          if (minEl) minEl.textContent = '00';
+          if (secEl) secEl.textContent = '00';
+          return;
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+        if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+        if (minEl) minEl.textContent = String(minutes).padStart(2, '0');
+        if (secEl) secEl.textContent = String(seconds).padStart(2, '0');
+      };
+
+      setInterval(updateCountdown, 1000);
+      updateCountdown();
+
       // ─── Smooth Scroll & Cinematic Parallax Animation ──────────────────
       const bgImage = document.getElementById('bgImage');
       const box1 = document.getElementById('box1');
