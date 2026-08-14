@@ -1,17 +1,17 @@
 (() => {
   // ─── Configuration ───────────────────────────────────────────────────
   const FRAME_COUNT = 300;
-  const FOLDER_PATH = 'New folder (2)';
+  const FOLDER_PATH = 'New folder';
   const FILE_PREFIX = 'ezgif-frame-';
   const FILE_EXT = '.jpg';
 
-  // Smooth interpolation factor: lower = smoother but more delayed
-  // 0.08 gives a premium, cinematic momentum feel
-  const LERP_FACTOR = 0.08;
+  // Smooth interpolation: lower = smoother cinematic glide
+  // 0.06 gives ultra-smooth premium momentum with natural deceleration
+  const LERP_FACTOR = 0.06;
 
   // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
-  const ctx = canvas.getContext('2d', { alpha: false });
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
   const loader = document.getElementById('loader');
   const loaderText = document.getElementById('loaderText');
   const loaderBar = document.getElementById('loaderBar');
@@ -20,8 +20,9 @@
   const images = [];
   let loadedCount = 0;
   let currentRenderedFrame = -1;
-  let targetProgress = 0;    // Where scroll wants us to be (0–1)
-  let currentProgress = 0;   // Where we actually are (smoothed, 0–1)
+  let targetProgress = 0;
+  let currentProgress = 0;
+  let lastTimestamp = 0;
 
   // ─── Frame URL builder ───────────────────────────────────────────────
   const getFrameUrl = (index) => {
@@ -29,38 +30,40 @@
     return `${FOLDER_PATH}/${FILE_PREFIX}${frameNum}${FILE_EXT}`;
   };
 
-  // ─── Canvas Resize (HiDPI-aware) ────────────────────────────────────
-  // Sets internal pixel buffer to match viewport × devicePixelRatio.
-  // CSS handles the visual display size (100vw × 100dvh).
+  // ─── Canvas Resize (Full Native DPI) ─────────────────────────────────
+  // Uses the FULL device pixel ratio (no capping) for maximum sharpness.
+  // On a 2x Retina display, the canvas pixel buffer is 2× the CSS size,
+  // delivering razor-sharp rendering without any browser upscaling blur.
   const resizeCanvas = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = window.devicePixelRatio || 1;
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Set internal buffer resolution
+    // Internal pixel buffer at full native resolution
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
 
-    // Set CSS display size to exactly match the viewport
+    // CSS display size matches viewport
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';
 
-    // Reset transform and apply DPR scaling
+    // Reset transform for fresh DPR scaling
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
+
+    // High-quality bicubic interpolation for upscaled frames
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // Re-draw current frame at new size
+    // Re-draw current frame at new resolution
     if (currentRenderedFrame >= 0 && images[currentRenderedFrame]) {
       drawFrame(currentRenderedFrame);
     }
   };
 
-  // ─── Draw Frame (Responsive Contain Fit) ─────────────────────────────
-  // Uses CONTAIN scaling: the entire composition (MCAS PRESENTS) is always
-  // fully visible and centered. Black bars fill any aspect ratio mismatch.
-  // This ensures nothing is ever cropped on any screen size or orientation.
+  // ─── Draw Frame (Cover Mode, Full Viewport) ──────────────────────────
+  // COVER scaling fills the entire viewport edge-to-edge with no black bars.
+  // The frame is centered so the MCAS PRESENTS composition stays visible.
   const drawFrame = (frameIndex) => {
     const img = images[frameIndex];
     if (!img) return;
@@ -72,20 +75,13 @@
     const vpW = window.innerWidth;
     const vpH = window.innerHeight;
 
-    // COVER: scale so the image fills the entire viewport edge-to-edge.
-    // Math.max ensures no black bars — the video always covers 100% of the viewport.
-    // On portrait phones, side edges get naturally cropped; on landscape, top/bottom.
-    // The composition remains centered so MCAS PRESENTS stays visible.
+    // Cover: always fill the viewport completely
     const scale = Math.max(vpW / imgW, vpH / imgH);
-
     const drawW = Math.round(imgW * scale);
     const drawH = Math.round(imgH * scale);
-
-    // Center the scaled image within the viewport
     const x = Math.round((vpW - drawW) / 2);
     const y = Math.round((vpH - drawH) / 2);
 
-    // Draw the frame covering the full viewport
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, imgW, imgH, x, y, drawW, drawH);
@@ -103,20 +99,28 @@
     }
   };
 
-  // ─── Animation Render Loop (Lerp Interpolation) ──────────────────────
-  // Runs at display refresh rate (60/120fps). Smoothly interpolates
-  // currentProgress toward targetProgress for premium cinematic motion.
-  const renderLoop = () => {
-    // Smooth interpolation: exponential ease toward target
-    const delta = targetProgress - currentProgress;
-    currentProgress += delta * LERP_FACTOR;
+  // ─── Animation Render Loop (Frame-Rate Independent Lerp) ─────────────
+  // Uses delta-time interpolation so scrolling feels identical at 60fps,
+  // 120fps, or any refresh rate. Produces ultra-smooth cinematic motion.
+  const renderLoop = (timestamp) => {
+    // Calculate delta time for frame-rate independent smoothing
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1); // cap at 100ms
+    lastTimestamp = timestamp;
 
-    // Snap when extremely close to avoid infinite micro-animations
-    if (Math.abs(delta) < 0.0001) {
+    // Frame-rate independent exponential interpolation
+    // At 60fps: factor ≈ 0.06 * 60 * 0.0167 = ~0.06 per frame
+    // At 120fps: factor ≈ 0.06 * 120 * 0.0083 = ~0.06 per frame (same feel)
+    const smoothFactor = 1 - Math.pow(1 - LERP_FACTOR, dt * 60);
+    const delta = targetProgress - currentProgress;
+    currentProgress += delta * smoothFactor;
+
+    // Snap to target when very close (prevents infinite micro-drift)
+    if (Math.abs(delta) < 0.00005) {
       currentProgress = targetProgress;
     }
 
-    // Map smooth progress to frame index
+    // Map smoothed progress to frame index
     const frameIndex = Math.min(
       FRAME_COUNT - 1,
       Math.max(0, Math.round(currentProgress * (FRAME_COUNT - 1)))
@@ -130,9 +134,9 @@
     requestAnimationFrame(renderLoop);
   };
 
-  // ─── Image Preloader ─────────────────────────────────────────────────
-  // Loads all 300 frames, converts each to GPU-accelerated ImageBitmap
-  // for maximum canvas rendering speed. Shows progress in the loader UI.
+  // ─── Image Preloader (GPU ImageBitmap + High Quality) ─────────────────
+  // Converts each JPEG frame to a GPU-resident ImageBitmap with high-quality
+  // color space conversion for the sharpest possible canvas rendering.
   const preloadImages = async () => {
     const promises = [];
 
@@ -143,15 +147,15 @@
 
         img.onload = async () => {
           try {
-            // GPU-accelerated ImageBitmap for faster drawImage
+            // Create GPU-accelerated ImageBitmap with high quality settings
             const bitmap = await createImageBitmap(img, {
               imageOrientation: 'none',
               premultiplyAlpha: 'none',
-              colorSpaceConversion: 'default'
+              colorSpaceConversion: 'default',
+              resizeQuality: 'high'
             });
             images[frameIdx] = bitmap;
           } catch (e) {
-            // Fallback to regular Image element
             images[frameIdx] = img;
           }
 
@@ -160,7 +164,7 @@
           if (loaderText) loaderText.textContent = `${percent}%`;
           if (loaderBar) loaderBar.style.width = `${percent}%`;
 
-          // Show first frame as soon as it loads (immediate visual feedback)
+          // Show first frame immediately for instant visual feedback
           if (frameIdx === 0 && currentRenderedFrame === -1) {
             drawFrame(0);
           }
@@ -189,7 +193,6 @@
       if (loader) {
         loader.classList.add('hidden');
       }
-      // Sync to current scroll position
       updateScrollProgress();
       currentProgress = targetProgress;
       const initialFrame = Math.min(
@@ -200,11 +203,9 @@
     }, 150);
   };
 
-  // ─── Event Listeners ─────────────────────────────────────────────────
-  // All passive for maximum scroll performance (no jank)
+  // ─── Event Listeners (all passive for zero-jank scrolling) ────────────
   window.addEventListener('resize', resizeCanvas, { passive: true });
   window.addEventListener('orientationchange', () => {
-    // Delay to let the browser finish orientation change layout
     setTimeout(resizeCanvas, 100);
   }, { passive: true });
   window.addEventListener('scroll', updateScrollProgress, { passive: true });

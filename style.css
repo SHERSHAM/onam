@@ -50,9 +50,10 @@ body {
   display: block;
   z-index: 1;
   pointer-events: none;
-  /* Subtle post-processing to enhance JPEG frame clarity */
+  /* Subtle post-processing to sharpen compressed JPEG frames */
   image-rendering: high-quality;
-  filter: contrast(1.06) brightness(1.02) saturate(1.08);
+  -webkit-image-rendering: high-quality;
+  filter: contrast(1.10) brightness(1.03) saturate(1.12);
 }
 
 /* ===== Preloader ===== */
