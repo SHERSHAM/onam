@@ -44,7 +44,7 @@
     ::-webkit-scrollbar-track { background: #000; }
     ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 2px; }
 
-    /* ===== Fixed Cinematic Background Layer ===== */
+    /* ===== Fixed Cinematic Background Layer (Unified For All Devices) ===== */
     .bg-stage-container {
       position: fixed;
       top: 0;
@@ -62,7 +62,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center;
+      object-position: center center;
       transform: scale(1.02);
       will-change: transform, filter;
       transition: transform 0.1s ease-out;
@@ -407,7 +407,7 @@
 </head>
 <body class="bg-black text-white p-0 m-0">
 
-  <!-- Fixed Cinematic Background Layer with Parallax Zoom -->
+  <!-- Fixed Cinematic Background Layer (Unified across all devices) -->
   <div class="bg-stage-container" id="bgStage">
     <img src="bg-name-reveal.png" alt="Name Reveal Cinematic Background" class="bg-image" id="bgImage">
     <div class="bg-vignette"></div>
