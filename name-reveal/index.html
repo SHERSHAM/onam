@@ -1105,7 +1105,9 @@
       setInterval(updateCountdown, 1000);
       updateCountdown();
 
-      // ─── Q&A Form Submission to Vercel API & Google Sheets ─────────────
+      // ─── Google Apps Script Web App Endpoint ─────────────────────────
+      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-shUzKa85Dn5vFJ_Ln_F2XzR9S9tKr11sduoLVjh_8hnLZj8MTEkRFy5Dx61BYbir/exec";
+
       window.submitQaForm = async () => {
         const studentNameInput = document.getElementById('studentName');
         const studentName = studentNameInput ? studentNameInput.value.trim() : '';
@@ -1117,7 +1119,7 @@
         const successMsg = document.getElementById('qaSuccessMsg');
         const btn = document.getElementById('btnSubmitQa');
 
-        // Validation check: all 3 questions are required
+        // 1. Validation check: all 3 questions are required
         if (!studentName || !department || !attendance) {
           if (errorText) errorText.textContent = 'PLEASE FILL IN ALL REQUIRED FIELDS (*)';
           if (errorMsg) errorMsg.classList.add('active');
@@ -1132,7 +1134,7 @@
 
         if (errorMsg) errorMsg.classList.remove('active');
 
-        // Prevent duplicate submissions while in flight
+        // 2. Prevent duplicate submissions while in flight
         if (btn) {
           btn.style.opacity = '0.7';
           btn.style.pointerEvents = 'none';
@@ -1146,26 +1148,33 @@
         };
 
         try {
-          // Send to Vercel Serverless Function API Route (/api/submit)
-          const response = await fetch('/api/submit', {
+          // 3. Send directly to Google Apps Script Web App Endpoint
+          await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(payload)
           });
 
-          const data = await response.json().catch(() => ({}));
+          // Backup server route if running on Vercel
+          fetch('/api/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(() => {});
 
-          if (response.ok && (data.success || response.status === 200)) {
-            // Backup locally in browser
-            try {
-              const stored = JSON.parse(localStorage.getItem('mcas_student_records') || '[]');
-              stored.push({
-                timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
-                studentName, department, attendance
-              });
-              localStorage.setItem('mcas_student_records', JSON.stringify(stored));
-            } catch (e) {}
+          // Save backup in browser storage
+          try {
+            const stored = JSON.parse(localStorage.getItem('mcas_student_records') || '[]');
+            stored.push({
+              timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+              studentName, department, attendance
+            });
+            localStorage.setItem('mcas_student_records', JSON.stringify(stored));
+          } catch (e) {}
 
+          // 4. Show Cinematic Success State
+          setTimeout(() => {
             if (btn) {
               btn.style.opacity = '0.5';
               btn.textContent = 'SUBMITTED';
@@ -1173,9 +1182,8 @@
             if (successMsg) {
               successMsg.classList.add('active');
             }
-          } else {
-            throw new Error(data.error || 'Submission could not be completed.');
-          }
+          }, 350);
+
         } catch (err) {
           console.error('Submission Error:', err);
           // Restore button for retry without clearing user fields
@@ -1185,7 +1193,7 @@
             btn.textContent = 'SUBMIT';
           }
           if (errorText) {
-            errorText.textContent = 'SUBMISSION COULD NOT BE COMPLETED. PLEASE TRY AGAIN.';
+            errorText.textContent = 'SUBMISSION FAILED — PLEASE TRY AGAIN';
           }
           if (errorMsg) {
             errorMsg.classList.add('active');

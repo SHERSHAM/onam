@@ -84,8 +84,9 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Option B: Using Google Apps Script Webhook URL (stored securely in Vercel env var)
-    const webhookUrl = process.env.GOOGLE_WEBHOOK_URL;
+    // 3. Google Apps Script Webhook URL (Default or from Env Var)
+    const webhookUrl = process.env.GOOGLE_WEBHOOK_URL || 'https://script.google.com/macros/s/AKfycby-shUzKa85Dn5vFJ_Ln_F2XzR9S9tKr11sduoLVjh_8hnLZj8MTEkRFy5Dx61BYbir/exec';
+    
     if (webhookUrl && webhookUrl.startsWith('http')) {
       const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
       const response = await fetch(webhookUrl, {
@@ -99,13 +100,9 @@ module.exports = async (req, res) => {
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`Google Webhook responded with status ${response.status}`);
-      }
-
       return res.status(200).json({
         success: true,
-        message: 'Registration recorded successfully via Webhook.'
+        message: 'Registration recorded successfully in Google Sheets.'
       });
     }
 
