@@ -1,0 +1,9 @@
+{
+  "name": "mcas-onam-reveal",
+  "version": "1.0.0",
+  "description": "MCAS Onam Grand Name Reveal & Registration",
+  "main": "index.html",
+  "dependencies": {
+    "googleapis": "^144.0.0"
+  }
+}

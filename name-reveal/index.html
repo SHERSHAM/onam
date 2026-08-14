@@ -748,8 +748,8 @@
 
     .qa-error-message {
       display: none;
-      margin-top: 1rem;
-      font-size: clamp(0.7rem, 1.2vw, 0.85rem);
+      margin-top: 1.25rem;
+      font-size: clamp(0.72rem, 1.3vw, 0.88rem);
       letter-spacing: 0.2em;
       color: #e5a750;
       text-shadow: 0 0 10px rgba(229, 167, 80, 0.5);
@@ -762,15 +762,31 @@
 
     .qa-success-message {
       display: none;
-      margin-top: 1.25rem;
-      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
-      letter-spacing: 0.25em;
-      color: #d4af37;
-      text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
-      animation: fadeInSuccess 0.5s ease-out forwards;
+      margin-top: 1.5rem;
+      text-align: center;
+      animation: fadeInSuccess 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     .qa-success-message.active {
+      display: block;
+    }
+
+    .qa-success-title {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: clamp(0.9rem, 2vw, 1.15rem);
+      letter-spacing: 0.35em;
+      color: #f5e6b8;
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .qa-success-subtitle {
+      font-size: clamp(0.65rem, 1.2vw, 0.8rem);
+      letter-spacing: 0.25em;
+      color: rgba(212, 175, 55, 0.8);
+      text-transform: uppercase;
       display: block;
     }
 
@@ -1039,10 +1055,11 @@
               SUBMIT
             </button>
             <div class="qa-error-message" id="qaErrorMsg">
-              <span>&#9888;</span> PLEASE FILL IN ALL REQUIRED FIELDS (*)
+              <span>&#9888;</span> <span id="qaErrorText">PLEASE FILL IN ALL REQUIRED FIELDS (*)</span>
             </div>
             <div class="qa-success-message" id="qaSuccessMsg">
-              <span>&#10003;</span> YOUR RESPONSE HAS BEEN RECORDED WITH HONOR
+              <span class="qa-success-title">REGISTRATION RECEIVED</span>
+              <span class="qa-success-subtitle">YOUR RESPONSE HAS BEEN RECORDED WITH HONOR</span>
             </div>
           </div>
 
@@ -1088,22 +1105,21 @@
       setInterval(updateCountdown, 1000);
       updateCountdown();
 
-      // ─── Q&A Form Submission & Excel / Google Sheets Sync ────────────
-      // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE:
-      const GOOGLE_SHEET_URL = "";
-
-      window.submitQaForm = () => {
+      // ─── Q&A Form Submission to Vercel API & Google Sheets ─────────────
+      window.submitQaForm = async () => {
         const studentNameInput = document.getElementById('studentName');
         const studentName = studentNameInput ? studentNameInput.value.trim() : '';
         const department = document.querySelector('input[name="department"]:checked')?.value || '';
-        const attending = document.querySelector('input[name="attending"]:checked')?.value || '';
+        const attendance = document.querySelector('input[name="attending"]:checked')?.value || '';
 
         const errorMsg = document.getElementById('qaErrorMsg');
+        const errorText = document.getElementById('qaErrorText');
         const successMsg = document.getElementById('qaSuccessMsg');
         const btn = document.getElementById('btnSubmitQa');
 
         // Validation check: all 3 questions are required
-        if (!studentName || !department || !attending) {
+        if (!studentName || !department || !attendance) {
+          if (errorText) errorText.textContent = 'PLEASE FILL IN ALL REQUIRED FIELDS (*)';
           if (errorMsg) errorMsg.classList.add('active');
           if (successMsg) successMsg.classList.remove('active');
 
@@ -1116,67 +1132,68 @@
 
         if (errorMsg) errorMsg.classList.remove('active');
 
+        // Prevent duplicate submissions while in flight
         if (btn) {
           btn.style.opacity = '0.7';
           btn.style.pointerEvents = 'none';
           btn.textContent = 'RECORDING...';
         }
 
-        const submission = {
-          timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        const payload = {
           studentName: studentName,
           department: department,
-          attending: attending
+          attendance: attendance
         };
 
-        // 1. Save locally in Browser Storage
         try {
-          const stored = JSON.parse(localStorage.getItem('mcas_student_records') || '[]');
-          stored.push(submission);
-          localStorage.setItem('mcas_student_records', JSON.stringify(stored));
-        } catch (e) {
-          console.warn('LocalStorage error:', e);
-        }
-
-        // 2. Send to Google Sheets (if URL configured)
-        if (GOOGLE_SHEET_URL && GOOGLE_SHEET_URL.startsWith('http')) {
-          fetch(GOOGLE_SHEET_URL, {
+          // Send to Vercel Serverless Function API Route (/api/submit)
+          const response = await fetch('/api/submit', {
             method: 'POST',
-            mode: 'no-cors',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(submission)
-          }).catch(err => console.error('Sheet sync error:', err));
-        }
+            body: JSON.stringify(payload)
+          });
 
-        setTimeout(() => {
+          const data = await response.json().catch(() => ({}));
+
+          if (response.ok && (data.success || response.status === 200)) {
+            // Backup locally in browser
+            try {
+              const stored = JSON.parse(localStorage.getItem('mcas_student_records') || '[]');
+              stored.push({
+                timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+                studentName, department, attendance
+              });
+              localStorage.setItem('mcas_student_records', JSON.stringify(stored));
+            } catch (e) {}
+
+            if (btn) {
+              btn.style.opacity = '0.5';
+              btn.textContent = 'SUBMITTED';
+            }
+            if (successMsg) {
+              successMsg.classList.add('active');
+            }
+          } else {
+            throw new Error(data.error || 'Submission could not be completed.');
+          }
+        } catch (err) {
+          console.error('Submission Error:', err);
+          // Restore button for retry without clearing user fields
           if (btn) {
-            btn.style.opacity = '0.5';
-            btn.textContent = 'SUBMITTED';
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            btn.textContent = 'SUBMIT';
+          }
+          if (errorText) {
+            errorText.textContent = 'SUBMISSION COULD NOT BE COMPLETED. PLEASE TRY AGAIN.';
+          }
+          if (errorMsg) {
+            errorMsg.classList.add('active');
           }
           if (successMsg) {
-            successMsg.classList.add('active');
+            successMsg.classList.remove('active');
           }
-        }, 600);
-      };
-
-      // ─── Helper function to download all local responses as Excel/CSV ───
-      window.downloadExcelSheet = () => {
-        const records = JSON.parse(localStorage.getItem('mcas_student_records') || '[]');
-        if (records.length === 0) {
-          alert('No responses recorded yet!');
-          return;
         }
-        let csvContent = 'data:text/csv;charset=utf-8,Timestamp,NAME OF THE STUDENT,Department,Are you attending the Onam celebration?\n';
-        records.forEach(r => {
-          csvContent += `"${r.timestamp}","${r.studentName}","${r.department}","${r.attending}"\n`;
-        });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', 'MCAS_Onam_Student_Registrations.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
       };
 
       // ─── Smooth Scroll & Cinematic Parallax Animation ──────────────────
