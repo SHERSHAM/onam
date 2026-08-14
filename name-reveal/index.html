@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
   <title>Name Reveal — MCAS</title>
-  <meta name="description" content="MCAS Presents — The Grand Name Reveal Cinematic Experience">
+  <meta name="description" content="MCAS Presents — The Grand Name Reveal & Audience Q&A Experience">
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
@@ -470,6 +470,226 @@
       margin-top: 0.45rem;
       text-transform: uppercase;
     }
+
+    /* ===== Section 4: Questions & Answers Section ===== */
+    .qa-section-wrapper {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .qa-header-box {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .qa-cards-list {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.2rem, 3vh, 2rem);
+      width: 100%;
+    }
+
+    .qa-card {
+      position: relative;
+      background: rgba(12, 10, 6, 0.6);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 4px;
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow:
+        0 0 40px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(212, 175, 55, 0.05),
+        inset 0 1px 0 rgba(245, 230, 184, 0.12);
+      transition: border-color 0.35s ease, box-shadow 0.35s ease;
+    }
+
+    .qa-card:hover {
+      border-color: rgba(212, 175, 55, 0.5);
+      box-shadow:
+        0 0 50px rgba(0, 0, 0, 0.9),
+        0 0 35px rgba(212, 175, 55, 0.1),
+        inset 0 1px 0 rgba(245, 230, 184, 0.2);
+    }
+
+    .qa-question-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .qa-num {
+      font-family: 'Cinzel', serif;
+      font-weight: 800;
+      font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+      color: rgba(212, 175, 55, 0.9);
+      letter-spacing: 0.1em;
+      line-height: 1.2;
+      flex-shrink: 0;
+      background: linear-gradient(180deg, #f5e6b8 0%, #d4af37 60%, #aa8222 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+    }
+
+    .qa-question-text {
+      font-family: 'Cinzel', serif;
+      font-weight: 600;
+      font-size: clamp(0.95rem, 2vw, 1.2rem);
+      line-height: 1.45;
+      letter-spacing: 0.05em;
+      color: #ffffff;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+    }
+
+    .qa-options-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-left: clamp(0rem, 2vw, 2.4rem);
+    }
+
+    .qa-option-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: clamp(0.75rem, 1.8vh, 1rem) clamp(1rem, 2.5vw, 1.4rem);
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(212, 175, 55, 0.18);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+      user-select: none;
+    }
+
+    .qa-option-item:hover {
+      border-color: rgba(212, 175, 55, 0.5);
+      background: rgba(212, 175, 55, 0.06);
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.08);
+      transform: translateX(4px);
+    }
+
+    .qa-radio-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Custom Radio Dot */
+    .qa-custom-radio {
+      width: 20px;
+      height: 20px;
+      border: 1.5px solid rgba(212, 175, 55, 0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+    }
+
+    .qa-custom-radio::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f5e6b8 0%, #d4af37 60%, #aa8222 100%);
+      opacity: 0;
+      transform: scale(0.4);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.8);
+    }
+
+    /* Checked State */
+    .qa-option-item:has(.qa-radio-input:checked) {
+      border-color: rgba(212, 175, 55, 0.85);
+      background: rgba(212, 175, 55, 0.12);
+      box-shadow:
+        0 0 25px rgba(212, 175, 55, 0.15),
+        inset 0 1px 0 rgba(245, 230, 184, 0.2);
+    }
+
+    .qa-option-item:has(.qa-radio-input:checked) .qa-custom-radio {
+      border-color: rgba(212, 175, 55, 0.95);
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.5);
+    }
+
+    .qa-option-item:has(.qa-radio-input:checked) .qa-custom-radio::after {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .qa-option-item:has(.qa-radio-input:checked) .qa-option-label {
+      color: #fff;
+      font-weight: 500;
+      text-shadow: 0 0 10px rgba(212, 175, 55, 0.4);
+    }
+
+    .qa-option-label {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.85rem, 1.6vw, 1rem);
+      letter-spacing: 0.06em;
+      color: rgba(240, 230, 210, 0.85);
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+      line-height: 1.4;
+    }
+
+    /* Submit Button */
+    .qa-submit-container {
+      margin-top: clamp(2rem, 4vh, 3rem);
+      text-align: center;
+    }
+
+    .btn-qa-submit {
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      font-size: clamp(0.7rem, 1.4vw, 0.9rem);
+      letter-spacing: 0.35em;
+      padding: clamp(14px, 2vh, 18px) clamp(32px, 5vw, 54px);
+      color: #000;
+      background: linear-gradient(180deg, #f5e6b8 0%, #d4af37 40%, #c9a84c 75%, #aa8222 100%);
+      border: 1px solid rgba(245, 230, 184, 0.6);
+      border-radius: 2px;
+      cursor: pointer;
+      box-shadow:
+        0 0 35px rgba(212, 175, 55, 0.3),
+        0 4px 12px rgba(0, 0, 0, 0.7);
+      transition: all 0.4s ease;
+    }
+
+    .btn-qa-submit:hover {
+      background: linear-gradient(180deg, #ffffff 0%, #f5e6b8 35%, #d4af37 70%, #b8942d 100%);
+      box-shadow:
+        0 0 55px rgba(212, 175, 55, 0.55),
+        0 6px 16px rgba(0, 0, 0, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .qa-success-message {
+      display: none;
+      margin-top: 1.25rem;
+      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+      letter-spacing: 0.25em;
+      color: #d4af37;
+      text-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+      animation: fadeInSuccess 0.5s ease-out forwards;
+    }
+
+    .qa-success-message.active {
+      display: block;
+    }
+
+    @keyframes fadeInSuccess {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body class="bg-black text-white p-0 m-0">
@@ -587,6 +807,180 @@
       </div>
     </section>
 
+    <!-- Scene 4: Questions & Answers Section -->
+    <section class="scroll-section" id="scene4">
+      <div class="content-box" id="box4">
+        <div class="qa-section-wrapper">
+          
+          <div class="qa-header-box">
+            <p class="proclamation-subtitle" style="margin-bottom: 0.5rem;">AUDIENCE ENGAGEMENT</p>
+            <h2 class="hero-main-title" style="font-size: clamp(2rem, 5vw, 3.6rem); margin-bottom: 0.75rem;">
+              QUESTIONS &amp; ANSWERS
+            </h2>
+            <div class="gold-divider"></div>
+            <p style="font-size: clamp(0.75rem, 1.3vw, 0.95rem); letter-spacing: 0.2em; color: rgba(245, 230, 184, 0.75); max-width: 650px; margin: 0 auto 2.5rem;">
+              SHARE YOUR THOUGHTS &bull; SHAPE THE CELEBRATION
+            </p>
+          </div>
+
+          <!-- Questions List -->
+          <div class="qa-cards-list">
+
+            <!-- Question 01 -->
+            <div class="qa-card">
+              <div class="corner-ornament corner-tl"></div>
+              <div class="corner-ornament corner-tr"></div>
+              <div class="corner-ornament corner-bl"></div>
+              <div class="corner-ornament corner-br"></div>
+              
+              <div class="qa-question-header">
+                <span class="qa-num">01</span>
+                <h3 class="qa-question-text">Which part of the celebration are you most excited about?</h3>
+              </div>
+
+              <div class="qa-options-group">
+                <label class="qa-option-item">
+                  <input type="radio" name="q1" value="Cultural performances" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Cultural performances</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q1" value="Music & entertainment" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Music &amp; entertainment</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q1" value="Traditional celebration" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Traditional celebration</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q1" value="Food & festivities" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Food &amp; festivities</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Question 02 -->
+            <div class="qa-card">
+              <div class="corner-ornament corner-tl"></div>
+              <div class="corner-ornament corner-tr"></div>
+              <div class="corner-ornament corner-bl"></div>
+              <div class="corner-ornament corner-br"></div>
+
+              <div class="qa-question-header">
+                <span class="qa-num">02</span>
+                <h3 class="qa-question-text">Who are you attending the celebration with?</h3>
+              </div>
+
+              <div class="qa-options-group">
+                <label class="qa-option-item">
+                  <input type="radio" name="q2" value="Friends" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Friends</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q2" value="Family" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Family</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q2" value="Classmates" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Classmates</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q2" value="Alone" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Alone</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Question 03 -->
+            <div class="qa-card">
+              <div class="corner-ornament corner-tl"></div>
+              <div class="corner-ornament corner-tr"></div>
+              <div class="corner-ornament corner-bl"></div>
+              <div class="corner-ornament corner-br"></div>
+
+              <div class="qa-question-header">
+                <span class="qa-num">03</span>
+                <h3 class="qa-question-text">What traditional Onam element represents the festival best for you?</h3>
+              </div>
+
+              <div class="qa-options-group">
+                <label class="qa-option-item">
+                  <input type="radio" name="q3" value="Pookkalam (Floral Carpet)" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Pookkalam (Floral Carpet)</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q3" value="Onasadya (Grand Feast)" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Onasadya (Grand Feast)</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q3" value="Pulikali & Traditional Arts" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Pulikali &amp; Traditional Arts</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q3" value="Thiruvathira & Music" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Thiruvathira &amp; Music</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Question 04 -->
+            <div class="qa-card">
+              <div class="corner-ornament corner-tl"></div>
+              <div class="corner-ornament corner-tr"></div>
+              <div class="corner-ornament corner-bl"></div>
+              <div class="corner-ornament corner-br"></div>
+
+              <div class="qa-question-header">
+                <span class="qa-num">04</span>
+                <h3 class="qa-question-text">Have you attended an MCAS Onam celebration before?</h3>
+              </div>
+
+              <div class="qa-options-group">
+                <label class="qa-option-item">
+                  <input type="radio" name="q4" value="Yes, every year!" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Yes, every year!</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q4" value="Yes, once or twice" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">Yes, once or twice</span>
+                </label>
+                <label class="qa-option-item">
+                  <input type="radio" name="q4" value="No, this is my first time!" class="qa-radio-input">
+                  <span class="qa-custom-radio"></span>
+                  <span class="qa-option-label">No, this is my first time!</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Submit Action -->
+          <div class="qa-submit-container">
+            <button type="button" class="btn-qa-submit" id="btnSubmitQa" onclick="submitQaForm()">
+              SUBMIT RESPONSES
+            </button>
+            <div class="qa-success-message" id="qaSuccessMsg">
+              <span>&#10003;</span> YOUR RESPONSE HAS BEEN RECORDED WITH HONOR
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <script>
@@ -625,14 +1019,30 @@
       setInterval(updateCountdown, 1000);
       updateCountdown();
 
+      // ─── Q&A Form Submission ──────────────────────────────────────────
+      window.submitQaForm = () => {
+        const btn = document.getElementById('btnSubmitQa');
+        const msg = document.getElementById('qaSuccessMsg');
+        if (btn) {
+          btn.style.opacity = '0.5';
+          btn.style.pointerEvents = 'none';
+          btn.textContent = 'RESPONSES RECORDED';
+        }
+        if (msg) {
+          msg.classList.add('active');
+        }
+      };
+
       // ─── Smooth Scroll & Cinematic Parallax Animation ──────────────────
       const bgImage = document.getElementById('bgImage');
       const box1 = document.getElementById('box1');
       const box2 = document.getElementById('box2');
       const box3 = document.getElementById('box3');
+      const box4 = document.getElementById('box4');
       const scene1 = document.getElementById('scene1');
       const scene2 = document.getElementById('scene2');
       const scene3 = document.getElementById('scene3');
+      const scene4 = document.getElementById('scene4');
 
       let targetScroll = 0;
       let currentScroll = 0;
@@ -692,16 +1102,34 @@
         if (box3 && scene3) {
           const rect = scene3.getBoundingClientRect();
           const vh = window.innerHeight;
-          const entryProgress = clamp((vh - rect.top) / (vh * 0.75), 0, 1);
+          const centerDist = (rect.top + rect.height / 2) - (vh / 2);
+          const normDist = clamp(centerDist / (vh * 0.7), -1, 1);
+          const absNorm = Math.abs(normDist);
           
-          const opacity = entryProgress;
-          const translateY = (1 - entryProgress) * 45;
-          const scale = 0.94 + entryProgress * 0.06;
-          const blur = (1 - entryProgress) * 8;
+          const opacity = clamp(1 - absNorm * 1.3, 0, 1);
+          const translateY = normDist * 35;
+          const scale = clamp(1 - absNorm * 0.06, 0.9, 1);
+          const blur = absNorm * 6;
 
           box3.style.opacity = String(opacity);
           box3.style.transform = `translateY(${translateY}px) scale(${scale})`;
           box3.style.filter = `blur(${blur}px)`;
+        }
+
+        // 5. Section 4 (Questions & Answers) Scroll Response
+        if (box4 && scene4) {
+          const rect = scene4.getBoundingClientRect();
+          const vh = window.innerHeight;
+          const entryProgress = clamp((vh - rect.top) / (vh * 0.65), 0, 1);
+          
+          const opacity = entryProgress;
+          const translateY = (1 - entryProgress) * 40;
+          const scale = 0.95 + entryProgress * 0.05;
+          const blur = (1 - entryProgress) * 6;
+
+          box4.style.opacity = String(opacity);
+          box4.style.transform = `translateY(${translateY}px) scale(${scale})`;
+          box4.style.filter = `blur(${blur}px)`;
         }
 
         requestAnimationFrame(render);
