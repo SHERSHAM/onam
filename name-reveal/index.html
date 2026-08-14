@@ -181,7 +181,7 @@
 
     /* Container */
     .content-box {
-      max-width: 1100px;
+      max-width: 1150px;
       width: 100%;
       margin: 0 auto;
       will-change: opacity, transform, filter;
@@ -317,11 +317,11 @@
       font-weight: 400;
     }
 
-    /* ===== Section 3: Name Reveal Poster Presentation ===== */
+    /* ===== Section 3: Dual Name Reveal Poster Presentation ===== */
     .reveal-frame-wrapper {
       position: relative;
       width: 100%;
-      max-width: 950px;
+      max-width: 1100px;
       margin: 0 auto;
     }
 
@@ -339,12 +339,20 @@
       position: relative;
     }
 
-    /* Poster Frame Display */
+    /* Posters Dual Grid Display */
+    .posters-grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+      gap: clamp(1.2rem, 3vw, 2.5rem);
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 1.5rem auto 2rem;
+    }
+
     .poster-showcase-card {
       position: relative;
       width: 100%;
-      max-width: min(850px, 92vw);
-      margin: 1.5rem auto 2rem;
       border-radius: 4px;
       overflow: hidden;
       border: 1px solid rgba(212, 175, 55, 0.5);
@@ -357,7 +365,7 @@
     }
 
     .poster-showcase-card:hover {
-      transform: scale(1.01);
+      transform: scale(1.02);
       box-shadow:
         0 0 60px rgba(212, 175, 55, 0.35),
         0 25px 55px rgba(0, 0, 0, 0.95);
@@ -514,7 +522,7 @@
       </div>
     </section>
 
-    <!-- Scene 3: The Climax / Name Reveal Poster + Countdown -->
+    <!-- Scene 3: The Climax / Name Reveal Dual Posters + Countdown -->
     <section class="scroll-section" id="scene3">
       <div class="content-box" id="box3">
         <div class="reveal-frame-wrapper">
@@ -530,15 +538,21 @@
             </h2>
             <div class="gold-divider"></div>
 
-            <!-- Poster Showcase -->
-            <div class="poster-showcase-card">
-              <img src="../name-reveal-poster.png" alt="Official Name Reveal Poster" class="poster-img" id="posterImg">
-              <div class="poster-sheen"></div>
+            <!-- Posters Dual Showcase -->
+            <div class="posters-grid-container">
+              <div class="poster-showcase-card">
+                <img src="../name-reveal-poster.png" alt="Official Name Reveal Poster 1" class="poster-img" id="posterImg1">
+                <div class="poster-sheen"></div>
+              </div>
+              <div class="poster-showcase-card">
+                <img src="../poster-girl.png" alt="Official Name Reveal Poster 2" class="poster-img" id="posterImg2">
+                <div class="poster-sheen"></div>
+              </div>
             </div>
 
             <p class="revealed-subtext">MCAS SPECIAL PRESENTATION &bull; ONAM 2026</p>
 
-            <!-- Cinematic Countdown Timer (Replacing REPLAY INTRO) -->
+            <!-- Cinematic Countdown Timer -->
             <div class="countdown-container" id="countdownTimer">
               <div class="countdown-unit">
                 <span class="countdown-num" id="cdDays">00</span>
