@@ -4,10 +4,15 @@
   const FOLDER_PATH = 'New folder';
   const FILE_PREFIX = 'ezgif-frame-';
   const FILE_EXT = '.jpg';
-
-  // Smooth interpolation: lower = smoother cinematic glide
-  // 0.06 gives ultra-smooth premium momentum with natural deceleration
   const LERP_FACTOR = 0.06;
+
+  // Title reveal timing (as fraction of total scroll 0–1)
+  const MCAS_START = 0.45;      // MCAS begins to appear
+  const MCAS_FULL = 0.58;       // MCAS fully visible
+  const PRESENTS_START = 0.55;  // PRESENTS begins
+  const PRESENTS_FULL = 0.65;   // PRESENTS fully visible
+  const TITLE_FADE_START = 0.78; // Titles begin fading out
+  const TITLE_FADE_END = 0.88;   // Titles fully gone
 
   // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
@@ -15,6 +20,8 @@
   const loader = document.getElementById('loader');
   const loaderText = document.getElementById('loaderText');
   const loaderBar = document.getElementById('loaderBar');
+  const titleMCAS = document.getElementById('titleMCAS');
+  const titlePresents = document.getElementById('titlePresents');
 
   // ─── State ───────────────────────────────────────────────────────────
   const images = [];
@@ -30,40 +37,39 @@
     return `${FOLDER_PATH}/${FILE_PREFIX}${frameNum}${FILE_EXT}`;
   };
 
-  // ─── Canvas Resize (Full Native DPI) ─────────────────────────────────
-  // Uses the FULL device pixel ratio (no capping) for maximum sharpness.
-  // On a 2x Retina display, the canvas pixel buffer is 2× the CSS size,
-  // delivering razor-sharp rendering without any browser upscaling blur.
+  // ─── Easing helper ───────────────────────────────────────────────────
+  // Smooth ease-in-out for cinematic reveals
+  const easeInOutCubic = (t) => {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  };
+
+  // Map a value from one range to 0–1, clamped
+  const mapRange = (value, inMin, inMax) => {
+    return Math.min(1, Math.max(0, (value - inMin) / (inMax - inMin)));
+  };
+
+  // ─── Canvas Resize ───────────────────────────────────────────────────
   const resizeCanvas = () => {
     const dpr = window.devicePixelRatio || 1;
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Internal pixel buffer at full native resolution
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
-
-    // CSS display size matches viewport
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';
 
-    // Reset transform for fresh DPR scaling
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
-
-    // High-quality bicubic interpolation for upscaled frames
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // Re-draw current frame at new resolution
     if (currentRenderedFrame >= 0 && images[currentRenderedFrame]) {
       drawFrame(currentRenderedFrame);
     }
   };
 
-  // ─── Draw Frame (Cover Mode, Full Viewport) ──────────────────────────
-  // COVER scaling fills the entire viewport edge-to-edge with no black bars.
-  // The frame is centered so the MCAS PRESENTS composition stays visible.
+  // ─── Draw Frame (Cover Mode) ─────────────────────────────────────────
   const drawFrame = (frameIndex) => {
     const img = images[frameIndex];
     if (!img) return;
@@ -74,8 +80,6 @@
 
     const vpW = window.innerWidth;
     const vpH = window.innerHeight;
-
-    // Cover: always fill the viewport completely
     const scale = Math.max(vpW / imgW, vpH / imgH);
     const drawW = Math.round(imgW * scale);
     const drawH = Math.round(imgH * scale);
@@ -85,11 +89,58 @@
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, imgW, imgH, x, y, drawW, drawH);
-
     currentRenderedFrame = frameIndex;
   };
 
-  // ─── Scroll Progress Tracker ─────────────────────────────────────────
+  // ─── Title Animation ─────────────────────────────────────────────────
+  // Updates the MCAS and PRESENTS DOM elements based on scroll progress.
+  // Creates a cinematic reveal: blur→sharp, scale up, opacity fade, golden glow.
+  const updateTitleOverlay = (progress) => {
+    // ── MCAS reveal ──
+    const mcasRevealRaw = mapRange(progress, MCAS_START, MCAS_FULL);
+    const mcasFadeRaw = 1 - mapRange(progress, TITLE_FADE_START, TITLE_FADE_END);
+    const mcasReveal = easeInOutCubic(mcasRevealRaw);
+    const mcasVisible = Math.min(mcasReveal, mcasFadeRaw);
+
+    if (mcasVisible <= 0) {
+      titleMCAS.style.opacity = '0';
+      titleMCAS.style.transform = 'scale(0.85) translateY(20px)';
+      titleMCAS.style.filter = 'drop-shadow(0 0 30px rgba(212,175,55,0)) drop-shadow(0 2px 4px rgba(0,0,0,0)) blur(8px)';
+    } else {
+      const scale = 0.85 + mcasReveal * 0.15;
+      const translateY = 20 * (1 - mcasReveal);
+      const blur = 8 * (1 - mcasReveal);
+      const glowAlpha = mcasVisible * 0.6;
+      const shadowAlpha = mcasVisible * 0.7;
+
+      titleMCAS.style.opacity = String(mcasVisible);
+      titleMCAS.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+      titleMCAS.style.filter = `drop-shadow(0 0 ${30 + mcasReveal * 20}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 3px 6px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+    }
+
+    // ── PRESENTS reveal ──
+    const presRevealRaw = mapRange(progress, PRESENTS_START, PRESENTS_FULL);
+    const presFadeRaw = 1 - mapRange(progress, TITLE_FADE_START, TITLE_FADE_END);
+    const presReveal = easeInOutCubic(presRevealRaw);
+    const presVisible = Math.min(presReveal, presFadeRaw);
+
+    if (presVisible <= 0) {
+      titlePresents.style.opacity = '0';
+      titlePresents.style.transform = 'translateY(12px)';
+      titlePresents.style.filter = 'drop-shadow(0 0 15px rgba(212,175,55,0)) drop-shadow(0 1px 3px rgba(0,0,0,0)) blur(6px)';
+    } else {
+      const translateY = 12 * (1 - presReveal);
+      const blur = 6 * (1 - presReveal);
+      const glowAlpha = presVisible * 0.4;
+      const shadowAlpha = presVisible * 0.5;
+
+      titlePresents.style.opacity = String(presVisible);
+      titlePresents.style.transform = `translateY(${translateY}px)`;
+      titlePresents.style.filter = `drop-shadow(0 0 ${15 + presReveal * 10}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 1px 3px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+    }
+  };
+
+  // ─── Scroll Progress ─────────────────────────────────────────────────
   const updateScrollProgress = () => {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     if (maxScroll > 0) {
@@ -99,44 +150,36 @@
     }
   };
 
-  // ─── Animation Render Loop (Frame-Rate Independent Lerp) ─────────────
-  // Uses delta-time interpolation so scrolling feels identical at 60fps,
-  // 120fps, or any refresh rate. Produces ultra-smooth cinematic motion.
+  // ─── Render Loop ─────────────────────────────────────────────────────
   const renderLoop = (timestamp) => {
-    // Calculate delta time for frame-rate independent smoothing
     if (!lastTimestamp) lastTimestamp = timestamp;
-    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1); // cap at 100ms
+    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1);
     lastTimestamp = timestamp;
 
-    // Frame-rate independent exponential interpolation
-    // At 60fps: factor ≈ 0.06 * 60 * 0.0167 = ~0.06 per frame
-    // At 120fps: factor ≈ 0.06 * 120 * 0.0083 = ~0.06 per frame (same feel)
     const smoothFactor = 1 - Math.pow(1 - LERP_FACTOR, dt * 60);
     const delta = targetProgress - currentProgress;
     currentProgress += delta * smoothFactor;
 
-    // Snap to target when very close (prevents infinite micro-drift)
     if (Math.abs(delta) < 0.00005) {
       currentProgress = targetProgress;
     }
 
-    // Map smoothed progress to frame index
     const frameIndex = Math.min(
       FRAME_COUNT - 1,
       Math.max(0, Math.round(currentProgress * (FRAME_COUNT - 1)))
     );
 
-    // Only repaint when the frame actually changes
     if (frameIndex !== currentRenderedFrame) {
       drawFrame(frameIndex);
     }
 
+    // Update title overlay every frame for smooth animation
+    updateTitleOverlay(currentProgress);
+
     requestAnimationFrame(renderLoop);
   };
 
-  // ─── Image Preloader (GPU ImageBitmap + High Quality) ─────────────────
-  // Converts each JPEG frame to a GPU-resident ImageBitmap with high-quality
-  // color space conversion for the sharpest possible canvas rendering.
+  // ─── Image Preloader ─────────────────────────────────────────────────
   const preloadImages = async () => {
     const promises = [];
 
@@ -147,7 +190,6 @@
 
         img.onload = async () => {
           try {
-            // Create GPU-accelerated ImageBitmap with high quality settings
             const bitmap = await createImageBitmap(img, {
               imageOrientation: 'none',
               premultiplyAlpha: 'none',
@@ -164,7 +206,6 @@
           if (loaderText) loaderText.textContent = `${percent}%`;
           if (loaderBar) loaderBar.style.width = `${percent}%`;
 
-          // Show first frame immediately for instant visual feedback
           if (frameIdx === 0 && currentRenderedFrame === -1) {
             drawFrame(0);
           }
@@ -187,12 +228,10 @@
     onAllImagesLoaded();
   };
 
-  // ─── Post-Load Setup ─────────────────────────────────────────────────
+  // ─── Post-Load ───────────────────────────────────────────────────────
   const onAllImagesLoaded = () => {
     setTimeout(() => {
-      if (loader) {
-        loader.classList.add('hidden');
-      }
+      if (loader) loader.classList.add('hidden');
       updateScrollProgress();
       currentProgress = targetProgress;
       const initialFrame = Math.min(
@@ -200,19 +239,19 @@
         Math.max(0, Math.round(currentProgress * (FRAME_COUNT - 1)))
       );
       drawFrame(initialFrame);
+      updateTitleOverlay(currentProgress);
     }, 150);
   };
 
-  // ─── Event Listeners (all passive for zero-jank scrolling) ────────────
+  // ─── Events ──────────────────────────────────────────────────────────
   window.addEventListener('resize', resizeCanvas, { passive: true });
-  window.addEventListener('orientationchange', () => {
-    setTimeout(resizeCanvas, 100);
-  }, { passive: true });
+  window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100), { passive: true });
   window.addEventListener('scroll', updateScrollProgress, { passive: true });
 
-  // ─── Initialize ──────────────────────────────────────────────────────
+  // ─── Init ────────────────────────────────────────────────────────────
   resizeCanvas();
   updateScrollProgress();
+  updateTitleOverlay(0);
   preloadImages();
   requestAnimationFrame(renderLoop);
 })();

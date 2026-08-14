@@ -10,8 +10,7 @@ html {
   height: 100%;
   background-color: #000000;
   overflow-x: hidden;
-  scroll-behavior: auto; /* JS handles smooth scrolling via lerp */
-  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -28,7 +27,6 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
 
 /* ===== Scroll Container ===== */
-/* Height controls total scroll distance: 500vh gives enough range for 300 frames */
 .scroll-container {
   position: relative;
   width: 100%;
@@ -36,24 +34,117 @@ body {
 }
 
 /* ===== Fixed Fullscreen Canvas ===== */
-/* Canvas is position:fixed covering the entire viewport.
-   JS sets the internal pixel buffer size; CSS sets the visual display size.
-   The canvas always covers 100% of the viewport. */
 #animationCanvas {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
-  width: 100dvw;   /* dynamic viewport width (safe area on mobile) */
+  width: 100dvw;
   height: 100vh;
-  height: 100dvh;  /* dynamic viewport height (accounts for mobile address bar) */
+  height: 100dvh;
   display: block;
   z-index: 1;
   pointer-events: none;
-  /* Subtle post-processing to sharpen compressed JPEG frames */
   image-rendering: high-quality;
   -webkit-image-rendering: high-quality;
   filter: contrast(1.10) brightness(1.03) saturate(1.12);
+}
+
+/* ===== Title Overlay — Cinematic Gold Text ===== */
+.title-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  width: 100dvw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+  padding: 0 5vw;
+}
+
+/* ===== MCAS Title ===== */
+.title-mcas {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-weight: 800;
+  font-size: clamp(3rem, 12vw, 10rem);
+  letter-spacing: clamp(0.15em, 2vw, 0.35em);
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  color: transparent;
+
+  /* Metallic antique-gold gradient */
+  background: linear-gradient(
+    180deg,
+    #e8d5a3 0%,
+    #c9a84c 18%,
+    #f5e6b8 28%,
+    #b8942d 42%,
+    #d4af37 50%,
+    #8b6914 62%,
+    #c9a84c 72%,
+    #f0d78c 82%,
+    #b8942d 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  /* 3D depth and golden glow */
+  text-shadow:
+    0 0 40px rgba(212, 175, 55, 0.0),
+    0 0 80px rgba(212, 175, 55, 0.0),
+    0 4px 8px rgba(0, 0, 0, 0.0);
+  
+  /* Filter for glow (works with background-clip: text) */
+  filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.0))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.0));
+
+  /* Initial hidden state */
+  opacity: 0;
+  transform: scale(0.85) translateY(20px);
+  will-change: opacity, transform, filter;
+  transition: none;
+}
+
+/* ===== PRESENTS Subtitle ===== */
+.title-presents {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-weight: 500;
+  font-size: clamp(0.7rem, 3vw, 2.2rem);
+  letter-spacing: clamp(0.4em, 3vw, 1em);
+  line-height: 1;
+  margin-top: clamp(0.5rem, 2vh, 1.5rem);
+  padding: 0;
+  color: transparent;
+
+  /* Softer gold gradient for subtitle */
+  background: linear-gradient(
+    180deg,
+    #e8d5a3 0%,
+    #d4af37 40%,
+    #c9a84c 60%,
+    #b8942d 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.0))
+          drop-shadow(0 1px 3px rgba(0, 0, 0, 0.0));
+
+  /* Initial hidden state */
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: opacity, transform, filter;
+  transition: none;
 }
 
 /* ===== Preloader ===== */
