@@ -19,6 +19,9 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     html {
@@ -79,9 +82,11 @@
       object-fit: cover;
       object-position: center center;
       transform: scale(1.02);
-      will-change: transform, filter;
-      transition: transform 0.1s ease-out;
       filter: contrast(1.12) brightness(0.92) saturate(1.15);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: high-quality;
     }
 
     /* Cinematic Atmospheric Vignette & Color Gradients */
@@ -206,10 +211,9 @@
       max-width: 1150px;
       width: 100%;
       margin: 0 auto;
-      will-change: opacity, transform, filter;
-      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-        transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-        filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
 
     /* Section 1: Hero Unveiling */
@@ -721,6 +725,14 @@
       text-align: center;
     }
 
+    .qa-actions-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
     .btn-qa-submit {
       font-family: 'Cinzel', serif;
       font-weight: 700;
@@ -820,7 +832,7 @@
 
   <!-- Fixed Cinematic Background Layer (Unified across all devices) -->
   <div class="bg-stage-container" id="bgStage">
-    <img src="../bg-name-reveal.png" alt="Name Reveal Cinematic Background" class="bg-image" id="bgImage">
+    <img src="bg-name-reveal.png" alt="Name Reveal Cinematic Background" class="bg-image" id="bgImage">
     <div class="bg-vignette"></div>
     <div class="ambient-gold-glow"></div>
     <canvas id="particlesCanvas"></canvas>
@@ -828,11 +840,11 @@
 
   <!-- Header / Navigation -->
   <header class="reveal-header">
-    <a href="../index.html" class="back-btn">
+    <a href="index.html" class="back-btn">
       <span>&#8592;</span>
       <span>INTRO</span>
     </a>
-    <div class="header-badge">MCAS CINEMATICS</div>
+    <div class="header-badge"></div>
   </header>
 
   <!-- Scrollable Cinematic Content Track -->
@@ -864,7 +876,7 @@
           <div class="corner-ornament corner-bl"></div>
           <div class="corner-ornament corner-br"></div>
 
-          <p class="proclamation-subtitle">CHAPTER I &bull; THE SPIRIT OF ONAM</p>
+          <p class="proclamation-subtitle">&bull; THE SPIRIT OF ONAM</p>
           <h2 class="proclamation-heading">A CELEBRATION OF ONAM</h2>
           <div class="gold-divider"></div>
           <p class="proclamation-text">
@@ -885,7 +897,7 @@
             <div class="corner-ornament corner-bl"></div>
             <div class="corner-ornament corner-br"></div>
 
-            <p class="proclamation-subtitle" style="margin-bottom: 0.5rem;">CHAPTER II &bull; THE NAME REVEAL</p>
+            <p class="proclamation-subtitle" style="margin-bottom: 0.5rem;">&bull; THE NAME REVEAL</p>
             <h2 class="hero-main-title" style="font-size: clamp(2rem, 5.5vw, 4rem); margin-bottom: 1rem;">
               OFFICIAL UNVEILING
             </h2>
@@ -894,12 +906,12 @@
             <!-- Posters Dual Showcase -->
             <div class="posters-grid-container">
               <div class="poster-showcase-card">
-                <img src="../name-reveal-poster.png" alt="Official Name Reveal Poster 1" class="poster-img"
+                <img src="name-reveal-poster.png" alt="Official Name Reveal Poster 1" class="poster-img"
                   id="posterImg1">
                 <div class="poster-sheen"></div>
               </div>
               <div class="poster-showcase-card">
-                <img src="../poster-girl.png" alt="Official Name Reveal Poster 2" class="poster-img" id="posterImg2">
+                <img src="poster-girl.png" alt="Official Name Reveal Poster 2" class="poster-img" id="posterImg2">
                 <div class="poster-sheen"></div>
               </div>
             </div>
@@ -1253,12 +1265,9 @@
         // 2. Section 1 (Hero) Scroll Response
         if (box1 && scene1) {
           const s1Progress = clamp(currentScroll / (window.innerHeight * 0.8), 0, 1);
-          const opacity = 1 - s1Progress * 1.2;
           const translateY = s1Progress * -40;
-          const blur = s1Progress * 8;
-          box1.style.opacity = String(clamp(opacity, 0, 1));
-          box1.style.transform = `translateY(${translateY}px) scale(${1 - s1Progress * 0.05})`;
-          box1.style.filter = `blur(${blur}px)`;
+          box1.style.opacity = '1';
+          box1.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         // 3. Section 2 (Proclamation Card) Scroll Response
@@ -1267,16 +1276,10 @@
           const vh = window.innerHeight;
           const centerDist = (rect.top + rect.height / 2) - (vh / 2);
           const normDist = clamp(centerDist / (vh * 0.7), -1, 1);
-          const absNorm = Math.abs(normDist);
-
-          const opacity = clamp(1 - absNorm * 1.4, 0, 1);
           const translateY = normDist * 35;
-          const scale = clamp(1 - absNorm * 0.08, 0.88, 1);
-          const blur = absNorm * 6;
 
-          box2.style.opacity = String(opacity);
-          box2.style.transform = `translateY(${translateY}px) scale(${scale})`;
-          box2.style.filter = `blur(${blur}px)`;
+          box2.style.opacity = '1';
+          box2.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         // 4. Section 3 (Poster Reveal Showcase) Scroll Response
@@ -1285,16 +1288,10 @@
           const vh = window.innerHeight;
           const centerDist = (rect.top + rect.height / 2) - (vh / 2);
           const normDist = clamp(centerDist / (vh * 0.7), -1, 1);
-          const absNorm = Math.abs(normDist);
-
-          const opacity = clamp(1 - absNorm * 1.3, 0, 1);
           const translateY = normDist * 35;
-          const scale = clamp(1 - absNorm * 0.06, 0.9, 1);
-          const blur = absNorm * 6;
 
-          box3.style.opacity = String(opacity);
-          box3.style.transform = `translateY(${translateY}px) scale(${scale})`;
-          box3.style.filter = `blur(${blur}px)`;
+          box3.style.opacity = '1';
+          box3.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         // 5. Section 4 (Questions & Answers) Scroll Response
@@ -1302,15 +1299,10 @@
           const rect = scene4.getBoundingClientRect();
           const vh = window.innerHeight;
           const entryProgress = clamp((vh - rect.top) / (vh * 0.65), 0, 1);
-
-          const opacity = entryProgress;
           const translateY = (1 - entryProgress) * 40;
-          const scale = 0.95 + entryProgress * 0.05;
-          const blur = (1 - entryProgress) * 6;
 
-          box4.style.opacity = String(opacity);
-          box4.style.transform = `translateY(${translateY}px) scale(${scale})`;
-          box4.style.filter = `blur(${blur}px)`;
+          box4.style.opacity = '1';
+          box4.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         requestAnimationFrame(render);

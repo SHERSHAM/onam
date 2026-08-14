@@ -231,8 +231,7 @@ body {
   /* Initial hidden state */
   opacity: 0;
   transform: translateY(10px) scale(0.95);
-  filter: blur(4px);
-  will-change: opacity, transform, filter, box-shadow, border-color;
+  will-change: opacity, transform, box-shadow, border-color;
   transition: box-shadow 0.4s ease, border-color 0.4s ease;
 
   /* Fallback text color for background-clip support */

@@ -103,17 +103,16 @@
       if (mcasReveal <= 0) {
         titleMCAS.style.opacity = '0';
         titleMCAS.style.transform = 'scale(0.85) translateY(20px)';
-        titleMCAS.style.filter = 'drop-shadow(0 0 30px rgba(212,175,55,0)) drop-shadow(0 2px 4px rgba(0,0,0,0)) blur(8px)';
+        titleMCAS.style.filter = 'drop-shadow(0 0 30px rgba(212,175,55,0)) drop-shadow(0 2px 4px rgba(0,0,0,0))';
       } else {
         const scale = 0.85 + mcasReveal * 0.15;
         const translateY = 20 * (1 - mcasReveal);
-        const blur = 8 * (1 - mcasReveal);
         const glowAlpha = mcasReveal * 0.6;
         const shadowAlpha = mcasReveal * 0.7;
 
         titleMCAS.style.opacity = String(mcasReveal);
         titleMCAS.style.transform = `scale(${scale}) translateY(${translateY}px)`;
-        titleMCAS.style.filter = `drop-shadow(0 0 ${30 + mcasReveal * 20}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 3px 6px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+        titleMCAS.style.filter = `drop-shadow(0 0 ${30 + mcasReveal * 20}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 3px 6px rgba(0,0,0,${shadowAlpha}))`;
       }
     }
 
@@ -125,16 +124,15 @@
       if (presReveal <= 0) {
         titlePresents.style.opacity = '0';
         titlePresents.style.transform = 'translateY(12px)';
-        titlePresents.style.filter = 'drop-shadow(0 0 15px rgba(212,175,55,0)) drop-shadow(0 1px 3px rgba(0,0,0,0)) blur(6px)';
+        titlePresents.style.filter = 'drop-shadow(0 0 15px rgba(212,175,55,0)) drop-shadow(0 1px 3px rgba(0,0,0,0))';
       } else {
         const translateY = 12 * (1 - presReveal);
-        const blur = 6 * (1 - presReveal);
         const glowAlpha = presReveal * 0.4;
         const shadowAlpha = presReveal * 0.5;
 
         titlePresents.style.opacity = String(presReveal);
         titlePresents.style.transform = `translateY(${translateY}px)`;
-        titlePresents.style.filter = `drop-shadow(0 0 ${15 + presReveal * 10}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 1px 3px rgba(0,0,0,${shadowAlpha})) blur(${blur}px)`;
+        titlePresents.style.filter = `drop-shadow(0 0 ${15 + presReveal * 10}px rgba(212,175,55,${glowAlpha})) drop-shadow(0 1px 3px rgba(0,0,0,${shadowAlpha}))`;
       }
     }
 
@@ -146,16 +144,15 @@
       if (btnReveal <= 0) {
         btnNameReveal.style.opacity = '0';
         btnNameReveal.style.transform = 'translateY(14px) scale(0.94)';
-        btnNameReveal.style.filter = 'blur(4px)';
+        btnNameReveal.style.filter = 'none';
         btnNameReveal.style.pointerEvents = 'none';
       } else {
         const translateY = 14 * (1 - btnReveal);
         const scale = 0.94 + btnReveal * 0.06;
-        const blur = 4 * (1 - btnReveal);
 
         btnNameReveal.style.opacity = String(btnReveal);
         btnNameReveal.style.transform = `translateY(${translateY}px) scale(${scale})`;
-        btnNameReveal.style.filter = `blur(${blur}px)`;
+        btnNameReveal.style.filter = 'none';
         btnNameReveal.style.pointerEvents = btnReveal > 0.7 ? 'auto' : 'none';
       }
     }

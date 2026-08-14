@@ -1,18 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
   <title>Name Reveal — MCAS</title>
   <meta name="description" content="MCAS Presents — The Grand Name Reveal & Registration Experience">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&display=swap"
+    rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     /* ===== Global Reset & Theme ===== */
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
     }
 
     html {
@@ -40,9 +49,18 @@
     }
 
     /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: #000; }
-    ::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 2px; }
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #000;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.3);
+      border-radius: 2px;
+    }
 
     /* ===== Fixed Cinematic Background Layer ===== */
     .bg-stage-container {
@@ -64,9 +82,11 @@
       object-fit: cover;
       object-position: center center;
       transform: scale(1.02);
-      will-change: transform, filter;
-      transition: transform 0.1s ease-out;
       filter: contrast(1.12) brightness(0.92) saturate(1.15);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: high-quality;
     }
 
     /* Cinematic Atmospheric Vignette & Color Gradients */
@@ -77,8 +97,8 @@
       width: 100%;
       height: 100%;
       background:
-        radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 75%, rgba(0,0,0,0.95) 100%),
-        linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0.9) 100%);
+        radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.65) 75%, rgba(0, 0, 0, 0.95) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 30%, rgba(0, 0, 0, 0.4) 70%, rgba(0, 0, 0, 0.9) 100%);
       pointer-events: none;
     }
 
@@ -96,8 +116,15 @@
     }
 
     @keyframes pulseGlow {
-      0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
-      100% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+      0% {
+        opacity: 0.7;
+        transform: translate(-50%, -50%) scale(0.95);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.05);
+      }
     }
 
     /* Floating Golden Dust Particles Canvas */
@@ -121,7 +148,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
       pointer-events: none;
     }
 
@@ -137,7 +164,7 @@
       align-items: center;
       gap: 0.6rem;
       padding: 0.5rem 1rem;
-      background: rgba(0,0,0,0.4);
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid rgba(212, 175, 55, 0.3);
       border-radius: 2px;
       backdrop-filter: blur(8px);
@@ -184,10 +211,9 @@
       max-width: 1150px;
       width: 100%;
       margin: 0 auto;
-      will-change: opacity, transform, filter;
-      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                  filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
 
     /* Section 1: Hero Unveiling */
@@ -207,21 +233,18 @@
       letter-spacing: clamp(0.1em, 1.5vw, 0.25em);
       line-height: 1.1;
       margin: 0 0 1.5rem 0;
-      background: linear-gradient(
-        180deg,
-        #f5e6b8 0%,
-        #d4af37 20%,
-        #fff4cc 35%,
-        #aa8222 55%,
-        #e5c56a 75%,
-        #8a6510 90%,
-        #c9a84c 100%
-      );
+      background: linear-gradient(180deg,
+          #f5e6b8 0%,
+          #d4af37 20%,
+          #fff4cc 35%,
+          #aa8222 55%,
+          #e5c56a 75%,
+          #8a6510 90%,
+          #c9a84c 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 45px rgba(212, 175, 55, 0.35))
-              drop-shadow(0 4px 16px rgba(0,0,0,0.85));
+      filter: drop-shadow(0 0 45px rgba(212, 175, 55, 0.35)) drop-shadow(0 4px 16px rgba(0, 0, 0, 0.85));
     }
 
     .gold-divider {
@@ -255,8 +278,17 @@
     }
 
     @keyframes floatIndicator {
-      0%, 100% { transform: translateY(0); opacity: 0.6; }
-      50% { transform: translateY(8px); opacity: 1; }
+
+      0%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.6;
+      }
+
+      50% {
+        transform: translateY(8px);
+        opacity: 1;
+      }
     }
 
     /* Section 2: The Proclamation / Lore Card */
@@ -282,10 +314,34 @@
       border: 1px solid rgba(212, 175, 55, 0.6);
       pointer-events: none;
     }
-    .corner-tl { top: -1px; left: -1px; border-right: none; border-bottom: none; }
-    .corner-tr { top: -1px; right: -1px; border-left: none; border-bottom: none; }
-    .corner-bl { bottom: -1px; left: -1px; border-right: none; border-top: none; }
-    .corner-br { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+    .corner-tl {
+      top: -1px;
+      left: -1px;
+      border-right: none;
+      border-bottom: none;
+    }
+
+    .corner-tr {
+      top: -1px;
+      right: -1px;
+      border-left: none;
+      border-bottom: none;
+    }
+
+    .corner-bl {
+      bottom: -1px;
+      left: -1px;
+      border-right: none;
+      border-top: none;
+    }
+
+    .corner-br {
+      bottom: -1px;
+      right: -1px;
+      border-left: none;
+      border-top: none;
+    }
 
     .proclamation-subtitle {
       font-size: clamp(0.65rem, 1.4vw, 0.95rem);
@@ -334,7 +390,7 @@
       -webkit-backdrop-filter: blur(16px);
       box-shadow:
         0 0 80px rgba(212, 175, 55, 0.18),
-        0 20px 50px rgba(0,0,0,0.95),
+        0 20px 50px rgba(0, 0, 0, 0.95),
         inset 0 0 40px rgba(212, 175, 55, 0.08);
       position: relative;
     }
@@ -392,7 +448,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 45%, rgba(212,175,55,0.08) 100%);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 45%, rgba(212, 175, 55, 0.08) 100%);
       pointer-events: none;
     }
 
@@ -436,19 +492,16 @@
       font-size: clamp(1.4rem, 4vw, 2.8rem);
       line-height: 1;
       letter-spacing: 0.08em;
-      background: linear-gradient(
-        180deg,
-        #ffffff 0%,
-        #f5e6b8 25%,
-        #d4af37 55%,
-        #aa8222 80%,
-        #c9a84c 100%
-      );
+      background: linear-gradient(180deg,
+          #ffffff 0%,
+          #f5e6b8 25%,
+          #d4af37 55%,
+          #aa8222 80%,
+          #c9a84c 100%);
       -webkit-background-clip: text;
       background-clip: text;
       -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4))
-              drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+      filter: drop-shadow(0 0 20px rgba(212, 175, 55, 0.4)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
       font-variant-numeric: tabular-nums;
     }
 
@@ -750,16 +803,31 @@
     }
 
     @keyframes fadeInAlert {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     @keyframes fadeInSuccess {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
   </style>
 </head>
+
 <body class="bg-black text-white p-0 m-0">
 
   <!-- Fixed Cinematic Background Layer (Unified across all devices) -->
@@ -776,7 +844,7 @@
       <span>&#8592;</span>
       <span>INTRO</span>
     </a>
-    <div class="header-badge">MCAS CINEMATICS</div>
+    <div class="header-badge"></div>
   </header>
 
   <!-- Scrollable Cinematic Content Track -->
@@ -788,7 +856,8 @@
         <p class="hero-tagline">MCAS PRESENTS</p>
         <h1 class="hero-main-title">THE GRAND REVEAL</h1>
         <div class="gold-divider"></div>
-        <p style="font-size: clamp(0.75rem, 1.4vw, 1rem); letter-spacing: 0.25em; color: rgba(245, 230, 184, 0.7); max-width: 600px; margin: 0 auto;">
+        <p
+          style="font-size: clamp(0.75rem, 1.4vw, 1rem); letter-spacing: 0.25em; color: rgba(245, 230, 184, 0.7); max-width: 600px; margin: 0 auto;">
           AN UNFORGETTABLE JOURNEY UNFOLDS
         </p>
         <div class="scroll-indicator-prompt">
@@ -806,12 +875,13 @@
           <div class="corner-ornament corner-tr"></div>
           <div class="corner-ornament corner-bl"></div>
           <div class="corner-ornament corner-br"></div>
-          
-          <p class="proclamation-subtitle">CHAPTER I &bull; THE SPIRIT OF ONAM</p>
+
+          <p class="proclamation-subtitle">&bull; THE SPIRIT OF ONAM</p>
           <h2 class="proclamation-heading">A CELEBRATION OF ONAM</h2>
           <div class="gold-divider"></div>
           <p class="proclamation-text">
-            Rooted in timeless tradition and filled with the spirit of prosperity. A festival that brings hearts together in the golden spirit of Mahabali.
+            Rooted in timeless tradition and filled with the spirit of prosperity. A festival that brings hearts
+            together in the golden spirit of Mahabali.
           </p>
         </div>
       </div>
@@ -827,7 +897,7 @@
             <div class="corner-ornament corner-bl"></div>
             <div class="corner-ornament corner-br"></div>
 
-            <p class="proclamation-subtitle" style="margin-bottom: 0.5rem;">CHAPTER II &bull; THE NAME REVEAL</p>
+            <p class="proclamation-subtitle" style="margin-bottom: 0.5rem;">&bull; THE NAME REVEAL</p>
             <h2 class="hero-main-title" style="font-size: clamp(2rem, 5.5vw, 4rem); margin-bottom: 1rem;">
               OFFICIAL UNVEILING
             </h2>
@@ -836,7 +906,8 @@
             <!-- Posters Dual Showcase -->
             <div class="posters-grid-container">
               <div class="poster-showcase-card">
-                <img src="name-reveal-poster.png" alt="Official Name Reveal Poster 1" class="poster-img" id="posterImg1">
+                <img src="name-reveal-poster.png" alt="Official Name Reveal Poster 1" class="poster-img"
+                  id="posterImg1">
                 <div class="poster-sheen"></div>
               </div>
               <div class="poster-showcase-card">
@@ -879,14 +950,15 @@
     <section class="scroll-section" id="scene4">
       <div class="content-box" id="box4">
         <div class="qa-section-wrapper">
-          
+
           <div class="qa-header-box">
             <p class="proclamation-subtitle" style="margin-bottom: 0.5rem;">REGISTRATION &amp; ATTENDANCE</p>
             <h2 class="hero-main-title" style="font-size: clamp(2rem, 5vw, 3.6rem); margin-bottom: 0.75rem;">
               QUESTIONS &amp; ANSWERS
             </h2>
             <div class="gold-divider"></div>
-            <p style="font-size: clamp(0.75rem, 1.3vw, 0.95rem); letter-spacing: 0.2em; color: rgba(245, 230, 184, 0.75); max-width: 650px; margin: 0 auto 2.5rem;">
+            <p
+              style="font-size: clamp(0.75rem, 1.3vw, 0.95rem); letter-spacing: 0.2em; color: rgba(245, 230, 184, 0.75); max-width: 650px; margin: 0 auto 2.5rem;">
               ONAM 2026 &bull; STUDENT REGISTRATION
             </p>
           </div>
@@ -900,7 +972,7 @@
               <div class="corner-ornament corner-tr"></div>
               <div class="corner-ornament corner-bl"></div>
               <div class="corner-ornament corner-br"></div>
-              
+
               <div class="qa-question-header">
                 <h3 class="qa-question-text">
                   NAME OF THE STUDENT <span class="qa-required-star">*</span>
@@ -908,15 +980,8 @@
               </div>
 
               <div class="qa-input-wrapper">
-                <input 
-                  type="text" 
-                  id="studentName" 
-                  name="studentName" 
-                  class="qa-text-input" 
-                  placeholder="Your answer"
-                  autocomplete="name"
-                  required
-                >
+                <input type="text" id="studentName" name="studentName" class="qa-text-input" placeholder="Your answer"
+                  autocomplete="name" required>
               </div>
             </div>
 
@@ -1071,7 +1136,7 @@
           if (errorText) errorText.textContent = 'PLEASE FILL IN ALL REQUIRED FIELDS (*)';
           if (errorMsg) errorMsg.classList.add('active');
           if (successMsg) successMsg.classList.remove('active');
-          
+
           if (!studentName && studentNameInput) {
             studentNameInput.focus();
             studentNameInput.style.borderBottomColor = '#e5a750';
@@ -1200,12 +1265,9 @@
         // 2. Section 1 (Hero) Scroll Response
         if (box1 && scene1) {
           const s1Progress = clamp(currentScroll / (window.innerHeight * 0.8), 0, 1);
-          const opacity = 1 - s1Progress * 1.2;
           const translateY = s1Progress * -40;
-          const blur = s1Progress * 8;
-          box1.style.opacity = String(clamp(opacity, 0, 1));
-          box1.style.transform = `translateY(${translateY}px) scale(${1 - s1Progress * 0.05})`;
-          box1.style.filter = `blur(${blur}px)`;
+          box1.style.opacity = '1';
+          box1.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         // 3. Section 2 (Proclamation Card) Scroll Response
@@ -1214,16 +1276,10 @@
           const vh = window.innerHeight;
           const centerDist = (rect.top + rect.height / 2) - (vh / 2);
           const normDist = clamp(centerDist / (vh * 0.7), -1, 1);
-          const absNorm = Math.abs(normDist);
-          
-          const opacity = clamp(1 - absNorm * 1.4, 0, 1);
           const translateY = normDist * 35;
-          const scale = clamp(1 - absNorm * 0.08, 0.88, 1);
-          const blur = absNorm * 6;
 
-          box2.style.opacity = String(opacity);
-          box2.style.transform = `translateY(${translateY}px) scale(${scale})`;
-          box2.style.filter = `blur(${blur}px)`;
+          box2.style.opacity = '1';
+          box2.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         // 4. Section 3 (Poster Reveal Showcase) Scroll Response
@@ -1232,16 +1288,10 @@
           const vh = window.innerHeight;
           const centerDist = (rect.top + rect.height / 2) - (vh / 2);
           const normDist = clamp(centerDist / (vh * 0.7), -1, 1);
-          const absNorm = Math.abs(normDist);
-          
-          const opacity = clamp(1 - absNorm * 1.3, 0, 1);
           const translateY = normDist * 35;
-          const scale = clamp(1 - absNorm * 0.06, 0.9, 1);
-          const blur = absNorm * 6;
 
-          box3.style.opacity = String(opacity);
-          box3.style.transform = `translateY(${translateY}px) scale(${scale})`;
-          box3.style.filter = `blur(${blur}px)`;
+          box3.style.opacity = '1';
+          box3.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         // 5. Section 4 (Questions & Answers) Scroll Response
@@ -1249,15 +1299,10 @@
           const rect = scene4.getBoundingClientRect();
           const vh = window.innerHeight;
           const entryProgress = clamp((vh - rect.top) / (vh * 0.65), 0, 1);
-          
-          const opacity = entryProgress;
           const translateY = (1 - entryProgress) * 40;
-          const scale = 0.95 + entryProgress * 0.05;
-          const blur = (1 - entryProgress) * 6;
 
-          box4.style.opacity = String(opacity);
-          box4.style.transform = `translateY(${translateY}px) scale(${scale})`;
-          box4.style.filter = `blur(${blur}px)`;
+          box4.style.opacity = '1';
+          box4.style.transform = `translate3d(0, ${translateY}px, 0)`;
         }
 
         requestAnimationFrame(render);
@@ -1325,4 +1370,5 @@
     })();
   </script>
 </body>
+
 </html>
