@@ -17,7 +17,7 @@
 
   // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
-  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const ctx = canvas.getContext('2d', { alpha: false });
   const loader = document.getElementById('loader');
   const loaderText = document.getElementById('loaderText');
   const loaderBar = document.getElementById('loaderBar');
@@ -49,9 +49,10 @@
     return Math.min(1, Math.max(0, (value - inMin) / (inMax - inMin)));
   };
 
-  // ─── Canvas Resize ───────────────────────────────────────────────────
+  // ─── Canvas Resize (iOS Safari Memory Safe) ───────────────────────────
   const resizeCanvas = () => {
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPR at 2 to avoid massive 3x memory footprint on iOS Retina displays
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
 
@@ -212,28 +213,21 @@
     requestAnimationFrame(renderLoop);
   };
 
-  // ─── Image Preloader ─────────────────────────────────────────────────
+  // ─── Image Preloader (iOS Safari WebKit Safe) ────────────────────────
   const preloadImages = async () => {
-    const promises = [];
+    // Controlled concurrency prevents network congestion and WebKit memory spikes
+    const CONCURRENCY = 16;
+    let nextIndex = 1;
 
-    for (let i = 1; i <= FRAME_COUNT; i++) {
-      const p = new Promise((resolve) => {
+    const loadNext = () => {
+      if (nextIndex > FRAME_COUNT) return Promise.resolve();
+      const i = nextIndex++;
+      const frameIdx = i - 1;
+
+      return new Promise((resolve) => {
         const img = new Image();
-        const frameIdx = i - 1;
-
-        img.onload = async () => {
-          try {
-            const bitmap = await createImageBitmap(img, {
-              imageOrientation: 'none',
-              premultiplyAlpha: 'none',
-              colorSpaceConversion: 'default',
-              resizeQuality: 'high'
-            });
-            images[frameIdx] = bitmap;
-          } catch (e) {
-            images[frameIdx] = img;
-          }
-
+        img.onload = () => {
+          images[frameIdx] = img;
           loadedCount++;
           const percent = Math.floor((loadedCount / FRAME_COUNT) * 100);
           if (loaderText) loaderText.textContent = `${percent}%`;
@@ -242,22 +236,25 @@
           if (frameIdx === 0 && currentRenderedFrame === -1) {
             drawFrame(0);
           }
-          resolve();
+          resolve(loadNext());
         };
 
         img.onerror = () => {
           console.warn(`Failed to load frame: ${getFrameUrl(i)}`);
           loadedCount++;
-          resolve();
+          resolve(loadNext());
         };
 
         img.src = getFrameUrl(i);
       });
+    };
 
-      promises.push(p);
+    const workerThreads = [];
+    for (let w = 0; w < CONCURRENCY; w++) {
+      workerThreads.push(loadNext());
     }
 
-    await Promise.all(promises);
+    await Promise.all(workerThreads);
     onAllImagesLoaded();
   };
 
