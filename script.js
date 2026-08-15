@@ -1,10 +1,14 @@
 (() => {
+  'use strict';
+
   // ─── Configuration ───────────────────────────────────────────────────
   const FRAME_COUNT = 300;
   const FOLDER_PATH = 'New folder';
   const FILE_PREFIX = 'ezgif-frame-';
-  const FILE_EXT = '.jpg';
+  const FILE_EXT = '.webp';
   const LERP_FACTOR = 0.06;
+  const CONCURRENCY = 8;
+  const LOOKAHEAD_WINDOW = 25; // Priority window around current scroll frame
 
   // Title and button reveal timing (as fraction of total scroll 0–1)
   const MCAS_START = 0.45;       // MCAS begins to appear
@@ -13,7 +17,6 @@
   const PRESENTS_FULL = 0.65;    // PRESENTS fully visible
   const BUTTON_START = 0.66;     // NAME REVEAL button begins reveal
   const BUTTON_FULL = 0.76;      // NAME REVEAL button fully visible
-  // No fade-out — titles and button stay permanently visible after reveal
 
   // ─── DOM Elements ────────────────────────────────────────────────────
   const canvas = document.getElementById('animationCanvas');
@@ -27,12 +30,15 @@
   const transitionOverlay = document.getElementById('transitionOverlay');
 
   // ─── State ───────────────────────────────────────────────────────────
-  const images = [];
+  const images = new Array(FRAME_COUNT);
+  const loadedSet = new Set();
+  const inFlightSet = new Set();
   let loadedCount = 0;
   let currentRenderedFrame = -1;
   let targetProgress = 0;
   let currentProgress = 0;
   let lastTimestamp = 0;
+  let scrollDirection = 1;
 
   // ─── Frame URL builder ───────────────────────────────────────────────
   const getFrameUrl = (index) => {
@@ -51,7 +57,6 @@
 
   // ─── Canvas Resize (iOS Safari Memory Safe) ───────────────────────────
   const resizeCanvas = () => {
-    // Cap DPR at 2 to avoid massive 3x memory footprint on iOS Retina displays
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -88,15 +93,25 @@
     const x = Math.round((vpW - drawW) / 2);
     const y = Math.round((vpH - drawH) / 2);
 
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, 0, 0, imgW, imgH, x, y, drawW, drawH);
     currentRenderedFrame = frameIndex;
   };
 
+  // ─── Find Nearest Loaded Frame (Fallback for Smooth Scrubbing) ────────
+  const findNearestLoaded = (frameIndex) => {
+    if (loadedSet.has(frameIndex)) return frameIndex;
+    for (let radius = 1; radius < FRAME_COUNT; radius++) {
+      const ahead = frameIndex + radius * scrollDirection;
+      const behind = frameIndex - radius * scrollDirection;
+      if (ahead >= 0 && ahead < FRAME_COUNT && loadedSet.has(ahead)) return ahead;
+      if (behind >= 0 && behind < FRAME_COUNT && loadedSet.has(behind)) return behind;
+    }
+    return -1;
+  };
+
   // ─── Title & Button Animation ────────────────────────────────────────
   const updateTitleOverlay = (progress) => {
-    // ── MCAS reveal (permanently visible once fully revealed) ──
+    // ── MCAS reveal ──
     if (titleMCAS) {
       const mcasRevealRaw = mapRange(progress, MCAS_START, MCAS_FULL);
       const mcasReveal = easeInOutCubic(mcasRevealRaw);
@@ -117,7 +132,7 @@
       }
     }
 
-    // ── PRESENTS reveal (permanently visible once fully revealed) ──
+    // ── PRESENTS reveal ──
     if (titlePresents) {
       const presRevealRaw = mapRange(progress, PRESENTS_START, PRESENTS_FULL);
       const presReveal = easeInOutCubic(presRevealRaw);
@@ -137,7 +152,7 @@
       }
     }
 
-    // ── NAME REVEAL Button reveal (naturally follows MCAS PRESENTS) ──
+    // ── NAME REVEAL Button reveal ──
     if (btnNameReveal) {
       const btnRevealRaw = mapRange(progress, BUTTON_START, BUTTON_FULL);
       const btnReveal = easeInOutCubic(btnRevealRaw);
@@ -159,14 +174,9 @@
     }
   };
 
-  // ─── Cinematic Page Navigation ───────────────────────────────────────
+  // ─── Page Navigation (instant, no transition/loading delay) ──────────
   window.cinematicNavigate = () => {
-    if (transitionOverlay) {
-      transitionOverlay.classList.add('active');
-    }
-    setTimeout(() => {
-      window.location.href = 'name-reveal.html';
-    }, 700);
+    window.location.href = 'name-reveal.html';
   };
 
   if (btnNameReveal) {
@@ -179,11 +189,9 @@
   // ─── Scroll Progress ─────────────────────────────────────────────────
   const updateScrollProgress = () => {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    if (maxScroll > 0) {
-      targetProgress = Math.min(1, Math.max(0, window.scrollY / maxScroll));
-    } else {
-      targetProgress = 0;
-    }
+    const newProgress = maxScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maxScroll)) : 0;
+    scrollDirection = newProgress >= targetProgress ? 1 : -1;
+    targetProgress = newProgress;
   };
 
   // ─── Render Loop ─────────────────────────────────────────────────────
@@ -206,71 +214,128 @@
     );
 
     if (frameIndex !== currentRenderedFrame) {
-      drawFrame(frameIndex);
+      const targetFrame = findNearestLoaded(frameIndex);
+      if (targetFrame !== -1 && targetFrame !== currentRenderedFrame) {
+        drawFrame(targetFrame);
+      }
     }
 
     updateTitleOverlay(currentProgress);
     requestAnimationFrame(renderLoop);
   };
 
-  // ─── Image Preloader (iOS Safari WebKit Safe) ────────────────────────
-  const preloadImages = async () => {
-    // Controlled concurrency prevents network congestion and WebKit memory spikes
-    const CONCURRENCY = 16;
-    let nextIndex = 1;
-
-    const loadNext = () => {
-      if (nextIndex > FRAME_COUNT) return Promise.resolve();
-      const i = nextIndex++;
-      const frameIdx = i - 1;
-
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-          images[frameIdx] = img;
-          loadedCount++;
-          const percent = Math.floor((loadedCount / FRAME_COUNT) * 100);
-          if (loaderText) loaderText.textContent = `${percent}%`;
-          if (loaderBar) loaderBar.style.width = `${percent}%`;
-
-          if (frameIdx === 0 && currentRenderedFrame === -1) {
-            drawFrame(0);
-          }
-          resolve(loadNext());
-        };
-
-        img.onerror = () => {
-          console.warn(`Failed to load frame: ${getFrameUrl(i)}`);
-          loadedCount++;
-          resolve(loadNext());
-        };
-
-        img.src = getFrameUrl(i);
-      });
-    };
-
-    const workerThreads = [];
-    for (let w = 0; w < CONCURRENCY; w++) {
-      workerThreads.push(loadNext());
+  // ─── Instant Page Reveal (Non-blocking) ──────────────────────────────
+  let pageRevealed = false;
+  const revealPage = () => {
+    if (pageRevealed) return;
+    pageRevealed = true;
+    if (loader) loader.classList.add('hidden');
+    updateScrollProgress();
+    currentProgress = targetProgress;
+    const initialFrame = Math.min(
+      FRAME_COUNT - 1,
+      Math.max(0, Math.round(currentProgress * (FRAME_COUNT - 1)))
+    );
+    const frameToDraw = findNearestLoaded(initialFrame);
+    if (frameToDraw !== -1) {
+      drawFrame(frameToDraw);
     }
-
-    await Promise.all(workerThreads);
-    onAllImagesLoaded();
+    updateTitleOverlay(currentProgress);
   };
 
-  // ─── Post-Load ───────────────────────────────────────────────────────
-  const onAllImagesLoaded = () => {
-    setTimeout(() => {
-      if (loader) loader.classList.add('hidden');
-      updateScrollProgress();
-      currentProgress = targetProgress;
-      const initialFrame = Math.min(
-        FRAME_COUNT - 1,
-        Math.max(0, Math.round(currentProgress * (FRAME_COUNT - 1)))
-      );
-      drawFrame(initialFrame);
-      updateTitleOverlay(currentProgress);
-    }, 150);
+  // ─── Progressive / Lazy Frame Loader ─────────────────────────────────
+  const loadSingleFrame = (frameIdx) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        images[frameIdx] = img;
+        loadedSet.add(frameIdx);
+        loadedCount++;
+        const percent = Math.floor((loadedCount / FRAME_COUNT) * 100);
+        if (loaderText) loaderText.textContent = `${percent}%`;
+        if (loaderBar) loaderBar.style.width = `${percent}%`;
+        resolve(img);
+      };
+      img.onerror = () => {
+        console.warn(`Failed to load: ${getFrameUrl(frameIdx + 1)}`);
+        loadedSet.add(frameIdx); // Prevent endless retry loops
+        reject();
+      };
+      img.src = getFrameUrl(frameIdx + 1);
+    });
+  };
+
+  // Picks next candidate frame prioritizing scroll position & lookahead
+  const pickNextCandidate = () => {
+    const anchor = Math.min(
+      FRAME_COUNT - 1,
+      Math.max(0, Math.round(targetProgress * (FRAME_COUNT - 1)))
+    );
+
+    let best = -1;
+    let bestDist = Infinity;
+
+    // Search lookahead window first
+    const minSearch = Math.max(0, anchor - LOOKAHEAD_WINDOW);
+    const maxSearch = Math.min(FRAME_COUNT - 1, anchor + LOOKAHEAD_WINDOW);
+
+    for (let idx = minSearch; idx <= maxSearch; idx++) {
+      if (loadedSet.has(idx) || inFlightSet.has(idx)) continue;
+      const dist = Math.abs(idx - anchor);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = idx;
+      }
+    }
+
+    // If local lookahead window is loaded, pick remaining frames closest to anchor
+    if (best === -1) {
+      for (let idx = 0; idx < FRAME_COUNT; idx++) {
+        if (loadedSet.has(idx) || inFlightSet.has(idx)) continue;
+        const dist = Math.abs(idx - anchor);
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = idx;
+        }
+      }
+    }
+
+    return best;
+  };
+
+  const preloadImages = async () => {
+    // Step 1: Preload initial active frame (or frame 0) to reveal instantly
+    const initialAnchor = Math.min(
+      FRAME_COUNT - 1,
+      Math.max(0, Math.round(targetProgress * (FRAME_COUNT - 1)))
+    );
+    try {
+      await loadSingleFrame(initialAnchor);
+    } catch (e) {}
+    revealPage();
+
+    // Step 2: Spawn background worker streams for progressive loading
+    const worker = async () => {
+      while (true) {
+        const nextIdx = pickNextCandidate();
+        if (nextIdx === -1) break; // All frames loaded
+
+        inFlightSet.add(nextIdx);
+        try {
+          await loadSingleFrame(nextIdx);
+        } catch (e) {
+        } finally {
+          inFlightSet.delete(nextIdx);
+        }
+      }
+    };
+
+    for (let w = 0; w < CONCURRENCY; w++) {
+      worker();
+    }
+
+    // Safety fallback: guaranteed reveal within 800ms
+    setTimeout(revealPage, 800);
   };
 
   // ─── Events ──────────────────────────────────────────────────────────
