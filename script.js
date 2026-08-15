@@ -7,8 +7,9 @@
   const FILE_PREFIX = 'ezgif-frame-';
   const FILE_EXT = '.webp';
   const LERP_FACTOR = 0.06;
-  const CONCURRENCY = 8;
+  const CONCURRENCY = 6;
   const LOOKAHEAD_WINDOW = 25; // Priority window around current scroll frame
+  const EVICTION_DISTANCE = 40; // Unload frames beyond this distance to keep memory bounded
 
   // Title and button reveal timing (as fraction of total scroll 0–1)
   const MCAS_START = 0.45;       // MCAS begins to appear
@@ -76,13 +77,27 @@
     }
   };
 
-  // ─── Draw Frame (Cover Mode) ─────────────────────────────────────────
+  // ─── Frame Eviction (Bounded Memory Management) ──────────────────────
+  const evictDistantFrames = (currentFrame) => {
+    for (const idx of loadedSet) {
+      if (Math.abs(idx - currentFrame) > EVICTION_DISTANCE) {
+        const item = images[idx];
+        if (item && typeof item.close === 'function') {
+          item.close();
+        }
+        images[idx] = null;
+        loadedSet.delete(idx);
+      }
+    }
+  };
+
+  // ─── Draw Frame (Cover Mode with Memory Eviction) ────────────────────
   const drawFrame = (frameIndex) => {
     const img = images[frameIndex];
     if (!img) return;
 
-    const imgW = img.naturalWidth || img.width || 1920;
-    const imgH = img.naturalHeight || img.height || 1080;
+    const imgW = img.naturalWidth || img.width || 1280;
+    const imgH = img.naturalHeight || img.height || 720;
     if (imgW === 0 || imgH === 0) return;
 
     const vpW = window.innerWidth;
@@ -95,6 +110,9 @@
 
     ctx.drawImage(img, 0, 0, imgW, imgH, x, y, drawW, drawH);
     currentRenderedFrame = frameIndex;
+
+    // Unload distant frames to keep resident decoded memory strictly bounded
+    evictDistantFrames(frameIndex);
   };
 
   // ─── Find Nearest Loaded Frame (Fallback for Smooth Scrubbing) ────────
@@ -243,7 +261,7 @@
     updateTitleOverlay(currentProgress);
   };
 
-  // ─── Progressive / Lazy Frame Loader ─────────────────────────────────
+  // ─── Single Frame Loader ─────────────────────────────────────────────
   const loadSingleFrame = (frameIdx) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -303,6 +321,11 @@
     return best;
   };
 
+  // ─── Idle-Scheduled Progressive Preloader (Non-competing) ────────────
+  const scheduleIdleWork = typeof window.requestIdleCallback === 'function'
+    ? (cb) => window.requestIdleCallback(cb, { timeout: 150 })
+    : (cb) => setTimeout(cb, 20);
+
   const preloadImages = async () => {
     // Step 1: Preload initial active frame (or frame 0) to reveal instantly
     const initialAnchor = Math.min(
@@ -314,24 +337,27 @@
     } catch (e) {}
     revealPage();
 
-    // Step 2: Spawn background worker streams for progressive loading
-    const worker = async () => {
-      while (true) {
+    // Step 2: Spawn background worker streams scheduled during idle browser periods
+    const runWorker = () => {
+      scheduleIdleWork(async () => {
         const nextIdx = pickNextCandidate();
-        if (nextIdx === -1) break; // All frames loaded
-
-        inFlightSet.add(nextIdx);
-        try {
-          await loadSingleFrame(nextIdx);
-        } catch (e) {
-        } finally {
-          inFlightSet.delete(nextIdx);
+        if (nextIdx !== -1) {
+          inFlightSet.add(nextIdx);
+          try {
+            await loadSingleFrame(nextIdx);
+          } catch (e) {
+          } finally {
+            inFlightSet.delete(nextIdx);
+          }
         }
-      }
+
+        // Continue fetching on next idle period
+        runWorker();
+      });
     };
 
     for (let w = 0; w < CONCURRENCY; w++) {
-      worker();
+      runWorker();
     }
 
     // Safety fallback: guaranteed reveal within 800ms
